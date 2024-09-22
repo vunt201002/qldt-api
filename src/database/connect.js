@@ -13,22 +13,26 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   },
 });
 
-export async function connect() {
-  try {
-    await sequelize.authenticate();
-    console.log('Connected to db');
-  } catch (err) {
-    console.log('Error when connecting to db:', err);
-  }
+export function connect() {
+  sequelize
+    .authenticate()
+    .then(() => {
+      console.log('Connected to db');
+    })
+    .catch((err) => {
+      console.log(`Error when connect to db`, err);
+    });
 }
 
-export async function reSync() {
-  try {
-    await sequelize.sync({force: false});
-    console.log('Re-sync done');
-  } catch (err) {
-    console.log('Error during re-sync:', err);
-  }
+export function reSync() {
+  sequelize
+    .sync({force: false})
+    .then(() => {
+      console.log(`Re-sync done`);
+    })
+    .catch((err) => {
+      console.log(`Error when re-sync`, err);
+    });
 }
 
 export default sequelize;
