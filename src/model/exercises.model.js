@@ -30,7 +30,7 @@ const exercise = sequelize.define('exercise', {
     allowNull: false,
   },
   students: {
-    type: DataTypes.ARRAY,
+    type: DataTypes.ARRAY(DataTypes.UUIDV4),
     defaultValue: DataTypes.ARRAY(DataTypes.UUIDV4),
     allowNull: true,
   },

@@ -22,18 +22,18 @@ export const basePersonModelField = {
     allowNull: false,
   },
   classes: {
-    type: DataTypes.ARRAY,
-    defaultValue: DataTypes.STRING,
+    type: DataTypes.ARRAY(DataTypes.UUIDV4),
+    defaultValue: DataTypes.ARRAY(DataTypes.UUIDV4),
     allowNull: false,
   },
   exercises: {
-    type: DataTypes.ARRAY,
-    defaultValue: DataTypes.ARRAY,
+    type: DataTypes.ARRAY(DataTypes.UUIDV4),
+    defaultValue: DataTypes.ARRAY(DataTypes.UUIDV4),
     allowNull: false,
   },
   timetable: {
-    type: DataTypes.ARRAY,
-    defaultValue: DataTypes.ARRAY,
+    type: DataTypes.ARRAY(DataTypes.UUIDV4),
+    defaultValue: DataTypes.ARRAY(DataTypes.UUIDV4),
     allowNull: false,
   },
 };

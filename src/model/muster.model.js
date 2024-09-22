@@ -15,8 +15,8 @@ const muster = sequelize.define('muster', {
     allowNull: false,
   },
   students: {
-    type: DataTypes.ARRAY,
-    defaultValue: DataTypes.ARRAY,
+    type: DataTypes.ARRAY(DataTypes.UUIDV4),
+    defaultValue: DataTypes.ARRAY(DataTypes.UUIDV4),
     allowNull: true,
   },
 });

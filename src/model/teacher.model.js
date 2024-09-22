@@ -5,8 +5,8 @@ import {DataTypes} from 'sequelize';
 const teacher = sequelize.define('teacher', {
   ...basePersonModelField,
   students: {
-    type: DataTypes.ARRAY,
-    defaultValue: DataTypes.ARRAY,
+    type: DataTypes.ARRAY(DataTypes.UUIDV4),
+    defaultValue: DataTypes.ARRAY(DataTypes.UUIDV4),
     allowNull: false,
   },
 });
