@@ -22,7 +22,7 @@ export const hash = async ({password, salt, saltRounds}) => {
 
 export const compare = async (store, input) => {
   try {
-    const result = await bcrypt.compare(store, input);
+    const result = await bcrypt.compare(input, store);
 
     if (!result) {
       console.log('Wrong password');

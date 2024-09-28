@@ -1,8 +1,10 @@
-import {hash} from '../utils/bcrypt.js';
+import {compare, hash} from '../utils/bcrypt.js';
 import accountModel from '../model/account.model.js';
 import RoleEnum from '../enumurator/role.enum.js';
 import statusAccountEnum from '../enumurator/statusAccount.enum.js';
 import {generateVerificationCode, storeVerificationCode, verifyCode} from '../utils/crypto.js';
+import {generateToken} from '../utils/jwt.js';
+import {ACCESS_TOKEN, REFRESH_TOKEN} from '../constant/token.js';
 
 export const sendVerificationCode = async (account) => {
   const code = generateVerificationCode();
@@ -77,6 +79,47 @@ export const signUp = async (req, res) => {
     if (err.name === 'SequelizeUniqueConstraintError')
       return res.status(409).json({message: 'Email already exists.'});
 
+    return res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const login = async (req, res) => {
+  const {email, password} = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({message: 'Email and password are required.'});
+  }
+
+  try {
+    const account = await accountModel.findOne({where: {email}});
+
+    if (!account) {
+      return res.status(404).json({message: 'Account not found.'});
+    }
+
+    if (!account.isVerified) {
+      return res.status(403).json({message: 'Account is not verified.'});
+    }
+    console.log(account);
+    const isPasswordCorrect = await compare(account.passwordHash, password);
+
+    if (!isPasswordCorrect) {
+      return res.status(401).json({message: 'Incorrect password.'});
+    }
+
+    const accessToken = generateToken(account.id, ACCESS_TOKEN);
+    const refreshToken = generateToken(account.id, REFRESH_TOKEN);
+
+    account.token = refreshToken;
+    await account.save();
+
+    return res.status(200).json({
+      message: 'Login successful',
+      accessToken,
+      refreshToken,
+    });
+  } catch (err) {
+    console.error(`Error during login: ${err.message}`);
     return res.status(500).json({message: 'Internal server error.'});
   }
 };
