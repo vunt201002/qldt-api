@@ -2,37 +2,61 @@ import sequelize from '../database/connect.js';
 import {DataTypes} from 'sequelize';
 import RoleEnum from '../enumurator/role.enum.js';
 import statusAccountEnum from '../enumurator/statusAccount.enum.js';
-import {basePersonModelField} from '../constant/baseModelField.js';
 
-const account = sequelize.define('account', {
-  ...basePersonModelField,
-  passwordHash: {
-    type: DataTypes.STRING,
-    defaultValue: DataTypes.STRING,
-    allowNull: false,
+const account = sequelize.define(
+  'account',
+  {
+    id: {
+      type: DataTypes.UUID,
+      primaryKey: true,
+      defaultValue: DataTypes.UUIDV4,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    passwordHash: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    role: {
+      type: DataTypes.ENUM(...Object.values(RoleEnum)),
+      defaultValue: RoleEnum.STUDENT,
+      allowNull: false,
+    },
+    token: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
+    session: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
+    status: {
+      type: DataTypes.ENUM(...Object.values(statusAccountEnum)),
+      defaultValue: statusAccountEnum.ACTIVE,
+      allowNull: false,
+    },
+    isVerified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false,
+    },
+    verificationCode: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
-  role: {
-    type: DataTypes.ENUM,
-    values: RoleEnum.values(),
-    defaultValue: RoleEnum.STUDENT,
-    allowNull: false,
+  {
+    timestamps: true,
   },
-  token: {
-    type: DataTypes.STRING,
-    defaultValue: DataTypes.STRING,
-    allowNull: true,
-  },
-  session: {
-    type: DataTypes.STRING,
-    defaultValue: DataTypes.STRING,
-    allowNull: true,
-  },
-  status: {
-    type: DataTypes.ENUM,
-    values: statusAccountEnum.values(),
-    defaultValue: statusAccountEnum.ACTIVE,
-    allowNull: false,
-  },
-});
+);
 
 export default account;
