@@ -7,8 +7,10 @@ export const verifyToken = (req, res, next) => {
     return res.status(403).json({message: 'No token provided.'});
   }
 
+  const accessToken = token.split(' ')[1];
+
   try {
-    req.user = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    req.user = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET);
     next();
   } catch (err) {
     console.log(`Error when verify token`, err);
