@@ -123,3 +123,29 @@ export const login = async (req, res) => {
     return res.status(500).json({message: 'Internal server error.'});
   }
 };
+
+export const logout = async (req, res) => {
+  const {email} = req.body; // You can also extract the email or user id from the token if necessary.
+
+  if (!email) {
+    return res.status(400).json({message: 'Email is required for logout.'});
+  }
+
+  try {
+    const account = await accountModel.findOne({where: {email}});
+
+    if (!account) {
+      return res.status(404).json({message: 'Account not found.'});
+    }
+
+    account.token = null;
+    account.session = null;
+
+    await account.save();
+
+    return res.status(200).json({message: 'Logged out successfully.'});
+  } catch (err) {
+    console.error(`Error during logout: ${err.message}`);
+    return res.status(500).json({message: 'Internal server error.'});
+  }
+};
