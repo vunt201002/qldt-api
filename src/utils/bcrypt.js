@@ -10,9 +10,8 @@ export const genSalts = async (saltRounds) => {
 };
 
 export const hash = async ({password, salt, saltRounds}) => {
-  const saltGen = salt || (await bcrypt.genSalt(saltRounds || 10));
-
   try {
+    const saltGen = salt || (await bcrypt.genSalt(saltRounds || 10));
     return await bcrypt.hash(password, saltGen);
   } catch (err) {
     console.log('Error when hashing password:', err);

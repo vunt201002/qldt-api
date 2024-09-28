@@ -100,7 +100,7 @@ export const login = async (req, res) => {
     if (!account.isVerified) {
       return res.status(403).json({message: 'Account is not verified.'});
     }
-    console.log(account);
+
     const isPasswordCorrect = await compare(account.passwordHash, password);
 
     if (!isPasswordCorrect) {
@@ -125,7 +125,7 @@ export const login = async (req, res) => {
 };
 
 export const logout = async (req, res) => {
-  const {email} = req.body; // You can also extract the email or user id from the token if necessary.
+  const {email} = req.body;
 
   if (!email) {
     return res.status(400).json({message: 'Email is required for logout.'});
@@ -146,6 +146,34 @@ export const logout = async (req, res) => {
     return res.status(200).json({message: 'Logged out successfully.'});
   } catch (err) {
     console.error(`Error during logout: ${err.message}`);
+    return res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const changeAccountInfo = async (req, res) => {
+  const {name, password} = req.body;
+  const {user} = req;
+
+  try {
+    const account = await accountModel.findOne({where: {id: user.id}});
+
+    if (!account) {
+      return res.status(404).json({message: 'Account not found.'});
+    }
+
+    if (name) {
+      account.name = name;
+    }
+
+    if (password) {
+      account.passwordHash = await hash({password});
+    }
+
+    await account.save();
+
+    return res.status(200).json({message: 'Account information updated successfully.'});
+  } catch (err) {
+    console.error('Error updating account info:', err.message);
     return res.status(500).json({message: 'Internal server error.'});
   }
 };
