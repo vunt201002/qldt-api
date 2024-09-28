@@ -1,6 +1,6 @@
 const RoleEnum = Object.freeze({
-  TEACHER: Symbol('teacher'),
-  STUDENT: Symbol('student'),
+  TEACHER: 'teacher',
+  STUDENT: 'student',
 });
 
 export default RoleEnum;

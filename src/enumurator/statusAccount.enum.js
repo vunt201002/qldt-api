@@ -1,6 +1,6 @@
 const statusAccountEnum = Object.freeze({
-  ACTIVE: Symbol('active'),
-  INACTIVE: Symbol('inactive'),
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
 });
 
 export default statusAccountEnum;

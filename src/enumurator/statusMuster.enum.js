@@ -1,6 +1,6 @@
 const statusMuster = Object.freeze({
-  PRESENT: Symbol('present'),
-  ABSENT: Symbol('absent'),
+  PRESENT: 'present',
+  ABSENT: 'absent',
 });
 
 export default statusMuster;
