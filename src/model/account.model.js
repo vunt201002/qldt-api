@@ -13,6 +13,7 @@ const account = sequelize.define('account', {
   },
   role: {
     type: DataTypes.ENUM,
+    values: RoleEnum.values(),
     defaultValue: RoleEnum.STUDENT,
     allowNull: false,
   },
@@ -28,6 +29,7 @@ const account = sequelize.define('account', {
   },
   status: {
     type: DataTypes.ENUM,
+    values: statusAccountEnum.values(),
     defaultValue: statusAccountEnum.ACTIVE,
     allowNull: false,
   },
