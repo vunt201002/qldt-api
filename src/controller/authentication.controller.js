@@ -2,36 +2,40 @@ import {compare, hash} from '../utils/bcrypt.js';
 import accountModel from '../model/account.model.js';
 import RoleEnum from '../enumurator/role.enum.js';
 import statusAccountEnum from '../enumurator/statusAccount.enum.js';
-import {verifyCode} from '../service/verifyCodeService.js';
+import {getVerifyCode, verifyCode} from '../service/verifyCodeService.js';
 import {generateToken} from '../utils/jwt.js';
 import {ACCESS_TOKEN, REFRESH_TOKEN} from '../constant/token.js';
-import {sendVerificationCode} from '../service/sendMailService.js';
 
 export const verifyAccount = async (req, res) => {
-  const {email, code} = req.body;
+  const {code} = req.body;
 
-  if (!email || !code) {
-    return res.status(400).json({message: 'Email and verification code are required.'});
+  if (!code) {
+    return res.status(400).json({
+      success: false,
+      message: 'Verification code is required.',
+    });
   }
 
   try {
-    const account = await accountModel.findOne({where: {email}});
+    let {user} = req;
 
-    if (!account) {
-      return res.status(404).json({message: 'Account not found.'});
-    }
-
-    const isValid = verifyCode(email, code);
+    const isValid = verifyCode(user.id, code);
 
     if (!isValid) {
-      return res.status(400).json({message: 'Invalid or expired verification code.'});
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification code.',
+      });
     }
 
-    account.isVerified = true;
-    account.status = statusAccountEnum.ACTIVE;
-    await account.save();
+    user.isVerified = true;
+    user.status = statusAccountEnum.ACTIVE;
+    await user.save();
 
-    return res.status(200).json({message: 'Account verified successfully.'});
+    return res.status(200).json({
+      success: true,
+      message: 'Account verified successfully.',
+    });
   } catch (err) {
     console.error(`Error during verification: ${err.message}`);
     return res.status(500).json({message: 'Internal server error.'});
@@ -43,7 +47,10 @@ export const signUp = async (req, res) => {
     const {name, email, password, role} = req.body;
 
     if (!name || !email || !password) {
-      return res.status(400).json({message: 'Name, email, and password are required.'});
+      return res.status(400).json({
+        success: false,
+        message: 'Name, email, and password are required.',
+      });
     }
 
     const hashPassword = await hash({password});
@@ -56,23 +63,33 @@ export const signUp = async (req, res) => {
       status: statusAccountEnum.INACTIVE,
     });
 
-    await sendVerificationCode(account);
+    const code = await getVerifyCode(account);
 
     return res.status(201).json({
-      id: account.id,
-      name: account.name,
-      email: account.email,
-      role: account.role,
-      status: account.status,
-      createdAt: account.createdAt,
-      updatedAt: account.updatedAt,
+      success: true,
+      account: {
+        id: account.id,
+        name: account.name,
+        email: account.email,
+        role: account.role,
+        verificationCode: code,
+        status: account.status,
+        createdAt: account.createdAt,
+        updatedAt: account.updatedAt,
+      },
     });
   } catch (err) {
     console.error(`Error during sign up: ${err.message}`);
     if (err.name === 'SequelizeUniqueConstraintError')
-      return res.status(409).json({message: 'Email already exists.'});
+      return res.status(409).json({
+        success: false,
+        message: 'Email already exists.',
+      });
 
-    return res.status(500).json({message: 'Internal server error.'});
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error.',
+    });
   }
 };
 
@@ -80,31 +97,32 @@ export const login = async (req, res) => {
   const {email, password} = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({message: 'Email and password are required.'});
+    return res.status(400).json({
+      success: false,
+      message: 'Email and password are required.',
+    });
   }
 
   try {
-    const account = await accountModel.findOne({where: {email}});
+    const {user} = req;
 
-    if (!account) {
-      return res.status(404).json({message: 'Account not found.'});
-    }
+    if (!user.isVerified)
+      return res.status(404).json({
+        success: false,
+        message: 'Account is not verified',
+      });
 
-    if (!account.isVerified) {
-      return res.status(403).json({message: 'Account is not verified.'});
-    }
-
-    const isPasswordCorrect = await compare(account.passwordHash, password);
+    const isPasswordCorrect = await compare(user.passwordHash, password);
 
     if (!isPasswordCorrect) {
       return res.status(401).json({message: 'Incorrect password.'});
     }
 
-    const accessToken = generateToken(account.id, ACCESS_TOKEN);
-    const refreshToken = generateToken(account.id, REFRESH_TOKEN);
+    const accessToken = generateToken(user, ACCESS_TOKEN);
+    const refreshToken = generateToken(user, REFRESH_TOKEN);
 
-    account.token = refreshToken;
-    await account.save();
+    user.token = refreshToken;
+    await user.save();
 
     return res.status(200).json({
       message: 'Login successful',
@@ -168,5 +186,23 @@ export const changeAccountInfo = async (req, res) => {
   } catch (err) {
     console.error('Error updating account info:', err.message);
     return res.status(500).json({message: 'Internal server error.'});
+  }
+};
+
+export const getAccountVerifyCode = async (req, res) => {
+  try {
+    const {user} = req;
+    const code = await getVerifyCode(user);
+
+    if (!code) return res.status(404).json({success: false, message: 'Account already verified'});
+
+    return res.status(200).json({
+      code,
+      success: true,
+      message: 'Get verify code successfully',
+    });
+  } catch (err) {
+    console.error(`Error during get verify code for account`, err);
+    return res.status(500).json({success: false, message: 'Internal server error'});
   }
 };

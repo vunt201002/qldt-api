@@ -49,10 +49,6 @@ const account = sequelize.define(
       defaultValue: false,
       allowNull: false,
     },
-    verificationCode: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
   },
   {
     timestamps: true,
