@@ -115,16 +115,20 @@ export const login = async (req, res) => {
     const isPasswordCorrect = await compare(user.passwordHash, password);
 
     if (!isPasswordCorrect) {
-      return res.status(401).json({message: 'Incorrect password.'});
+      return res.status(401).json({
+        success: false,
+        message: 'Incorrect password.',
+      });
     }
 
-    const accessToken = generateToken(user, ACCESS_TOKEN);
-    const refreshToken = generateToken(user, REFRESH_TOKEN);
+    const accessToken = generateToken({id: user.id, role: user.role}, ACCESS_TOKEN);
+    const refreshToken = generateToken({id: user.id, role: user.role}, REFRESH_TOKEN);
 
     user.token = refreshToken;
     await user.save();
 
     return res.status(200).json({
+      success: true,
       message: 'Login successful',
       accessToken,
       refreshToken,
@@ -162,16 +166,15 @@ export const logout = async (req, res) => {
 };
 
 export const changeAccountInfo = async (req, res) => {
-  const {name, password} = req.body;
-  const {user} = req;
-
   try {
-    const account = await accountModel.findOne({where: {id: user.id}});
+    const {name, password} = req.body;
+    const {user} = req;
 
-    if (!account) {
-      return res.status(404).json({message: 'Account not found.'});
-    }
-
+    const account = await accountModel.findOne({
+      where: {
+        id: user.id,
+      },
+    });
     if (name) {
       account.name = name;
     }
@@ -182,10 +185,16 @@ export const changeAccountInfo = async (req, res) => {
 
     await account.save();
 
-    return res.status(200).json({message: 'Account information updated successfully.'});
+    return res.status(200).json({
+      success: true,
+      message: 'Account information updated successfully.',
+    });
   } catch (err) {
     console.error('Error updating account info:', err.message);
-    return res.status(500).json({message: 'Internal server error.'});
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error.',
+    });
   }
 };
 
