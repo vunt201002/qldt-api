@@ -21,7 +21,6 @@ export const verifyToken = (req, res, next) => {
           message: 'Token is not valid',
         });
       }
-      console.log('userhere', user);
       req.user = user;
       next();
     });
