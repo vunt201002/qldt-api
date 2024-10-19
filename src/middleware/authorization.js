@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import roleEnum from '../enumurator/role.enum.js';
 
 export const verifyToken = (req, res, next) => {
   const token = req.headers['authorization'];
@@ -6,7 +7,7 @@ export const verifyToken = (req, res, next) => {
   if (!token) {
     return res.status(403).json({
       success: false,
-      message: 'No token provided.',
+      message: "You're not authenticated",
     });
   }
 
@@ -16,8 +17,6 @@ export const verifyToken = (req, res, next) => {
     jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET, (err, user) => {
       if (err) {
         return res.status(403).json({
-          success: false,
-          err,
           message: 'Token is not valid',
         });
       }
@@ -28,4 +27,26 @@ export const verifyToken = (req, res, next) => {
     console.log(`Error when verify token`, err);
     return res.status(401).json({message: 'Invalid or expired token.'});
   }
+};
+
+export const verifyAdmin = (req, res, next) => {
+  verifyToken(req, res, () => {
+    if (req.user.role === roleEnum.ADMIN) return next();
+
+    return res.status(403).json({
+      success: false,
+      message: "You're not allowed to do that.",
+    });
+  });
+};
+
+export const verifyAccessApi = (req, res, next) => {
+  verifyToken(req, res, () => {
+    if (req.user.role === roleEnum.ADMIN || req.user.id === req.params.id) return next();
+
+    return res.status(403).json({
+      success: false,
+      message: "You're not allowed to do that.",
+    });
+  });
 };
