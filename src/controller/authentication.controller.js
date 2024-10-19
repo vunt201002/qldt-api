@@ -2,17 +2,10 @@ import {compare, hash} from '../utils/bcrypt.js';
 import accountModel from '../model/account.model.js';
 import RoleEnum from '../enumurator/role.enum.js';
 import statusAccountEnum from '../enumurator/statusAccount.enum.js';
-import {generateVerificationCode, storeVerificationCode, verifyCode} from '../utils/crypto.js';
+import {verifyCode} from '../service/verifyCodeService.js';
 import {generateToken} from '../utils/jwt.js';
 import {ACCESS_TOKEN, REFRESH_TOKEN} from '../constant/token.js';
-
-export const sendVerificationCode = async (account) => {
-  const code = generateVerificationCode();
-  storeVerificationCode(account.email, code);
-
-  console.log(`Verification code sent to ${account.email}: ${code}`);
-  return code;
-};
+import {sendVerificationCode} from '../service/sendMailService.js';
 
 export const verifyAccount = async (req, res) => {
   const {email, code} = req.body;

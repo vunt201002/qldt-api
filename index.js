@@ -1,4 +1,3 @@
-// index.js
 import app from './src/app.js';
 import {connect, reSync} from './src/database/connect.js';
 
