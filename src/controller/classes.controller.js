@@ -57,15 +57,17 @@ export const getClassSchedule = async (req, res) => {
   try {
     const {id} = req.params;
 
-    const schedules = await getElementFields({
-      model: ClassModel,
-      fields: ['schedule'],
+    const resp = await ClassModel.findOne({
+      where: {
+        id: id,
+      },
+      attributes: ['schedule'],
     });
 
     return res.status(200).json({
       success: true,
       message: 'Get class schedule successfully',
-      data: schedules,
+      data: JSON.parse(resp.schedule),
     });
   } catch (err) {
     console.error(`Error during get class schedule`, err);
@@ -87,7 +89,7 @@ export const createOrUpdateClass = async (req, res) => {
       data: {
         ...(name && {name}),
         ...(description && {description}),
-        ...(schedule && {schedule: JSON.stringify(schedule)}),
+        ...(schedule && {schedule}),
         ...(teacherId && {teacherId}),
       },
     });
