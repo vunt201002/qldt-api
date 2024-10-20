@@ -49,6 +49,11 @@ const account = sequelize.define(
       defaultValue: false,
       allowNull: false,
     },
+    passwordChangeRequired: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      allowNull: true,
+    },
   },
   {
     timestamps: true,

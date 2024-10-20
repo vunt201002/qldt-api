@@ -61,6 +61,7 @@ export const signUp = async (req, res) => {
       passwordHash: hashPassword,
       role: role || RoleEnum.STUDENT,
       status: statusAccountEnum.INACTIVE,
+      passwordChangeRequired: true,
     });
 
     const code = await getVerifyCode(account);
@@ -74,6 +75,7 @@ export const signUp = async (req, res) => {
         role: account.role,
         verificationCode: code,
         status: account.status,
+        passwordChangeRequired: true,
         createdAt: account.createdAt,
         updatedAt: account.updatedAt,
       },
@@ -183,6 +185,7 @@ export const changeAccountInfo = async (req, res) => {
       account.passwordHash = await hash({password});
     }
 
+    account.passwordChangeRequired = false;
     await account.save();
 
     return res.status(200).json({
