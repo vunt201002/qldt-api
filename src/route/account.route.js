@@ -6,8 +6,8 @@ const router = express.Router();
 
 router.get('/', verifyAdmin, getAllAccounts);
 router.put('/:id', verifyAccessApi, setAccountInfo);
-router.put('/role/:id', verifyAdmin, setAccountInfo);
+router.put('/role/:id', setAccountInfo);
 router.put('/deactivated/:id', setAccountInfo);
-router.put('/reactivated/:id', verifyAdmin, setAccountInfo);
+router.put('/reactivated/:id', setAccountInfo);
 
 export default router;

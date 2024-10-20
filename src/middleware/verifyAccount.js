@@ -1,4 +1,4 @@
-import {getAccountByField} from '../service/account.service.js';
+import {getAccountByField} from '../repositories/account.repository.js';
 
 export const verifyAccountExists = async (req, res, next) => {
   try {

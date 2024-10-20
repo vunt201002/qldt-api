@@ -1,4 +1,5 @@
 import AccountModel from '../model/account.model.js';
+import statusAccountEnum from '../enumurator/statusAccount.enum.js';
 
 export const getAllAccounts = async (req, res) => {
   try {
@@ -19,7 +20,10 @@ export const getAllAccounts = async (req, res) => {
 export const setAccountInfo = async (req, res) => {
   try {
     const {id} = req.params;
-    const setData = req.body;
+    const action = req.path.split('/')[1];
+    const updateData = {
+      ...req.body,
+    };
 
     const account = await AccountModel.findOne({
       where: {
@@ -27,7 +31,21 @@ export const setAccountInfo = async (req, res) => {
       },
     });
 
-    await account.update(setData);
+    switch (action) {
+      case 'deactivated':
+        updateData.status = statusAccountEnum.INACTIVE;
+        break;
+      case 'reactivated':
+        updateData.status = statusAccountEnum.ACTIVE;
+        break;
+      case 'role':
+        updateData.role = req.body.role;
+        break;
+      default:
+        break;
+    }
+
+    await account.update(updateData);
 
     return res.status(200).json({
       success: true,
