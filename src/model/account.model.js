@@ -4,7 +4,7 @@ import RoleEnum from '../enumurator/role.enum.js';
 import statusAccountEnum from '../enumurator/statusAccount.enum.js';
 
 const account = sequelize.define(
-  'account',
+  'Account',
   {
     id: {
       type: DataTypes.UUID,
