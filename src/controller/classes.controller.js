@@ -4,6 +4,7 @@ import getElementFields from '../helpers/getElementFields.js';
 import {getElementByField} from '../helpers/getElementByField.js';
 import {createOrUpdate} from '../helpers/createOrUpdate.js';
 import sequelize from '../database/connect.js';
+import {ValidationError} from 'sequelize';
 
 export const getAllClasses = async (req, res) => {
   try {
@@ -81,17 +82,12 @@ export const getClassSchedule = async (req, res) => {
 export const createOrUpdateClass = async (req, res) => {
   try {
     const {id} = req.params;
-    const {name, description, schedule, teacherId, studentIds} = req.body;
+    const {studentIds, ...rest} = req.body;
     const resp = await createOrUpdate({
       model: ClassModel,
       field: 'id',
       value: id || '',
-      data: {
-        ...(name && {name}),
-        ...(description && {description}),
-        ...(schedule && {schedule}),
-        ...(teacherId && {teacherId}),
-      },
+      data: rest,
     });
 
     if (studentIds && Array.isArray(studentIds)) {
@@ -112,6 +108,16 @@ export const createOrUpdateClass = async (req, res) => {
     });
   } catch (err) {
     console.error(`Error during create or update class`, err);
+
+    if (err instanceof ValidationError) {
+      const errorMessages = err.errors.map((error) => error.message);
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        errors: errorMessages,
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: 'Internal server error',

@@ -21,9 +21,32 @@ const Class = sequelize.define(
       type: DataTypes.JSON,
       allowNull: true,
     },
+    semester: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    maxStudent: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    startDate: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    endDate: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
   },
   {
     timestamps: true,
+    validate: {
+      startDateBeforeEndDate() {
+        if (this.startDate >= this.endDate) {
+          throw new Error('The start date must be before the end date.');
+        }
+      },
+    },
   },
 );
 

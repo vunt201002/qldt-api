@@ -13,6 +13,7 @@ import ConversationModel from './conversation.model.js';
 import MessageModel from './message.model.js';
 import SystemSettings from './systemSettings.js';
 import NotificationModel from './notification.model.js';
+import StudentAssignmentsModel from './studentAssignments.model.js';
 
 export const setupAssociations = () => {
   // Account associations
@@ -51,9 +52,16 @@ export const setupAssociations = () => {
   AssignmentModel.belongsTo(ClassModel, {foreignKey: 'classId'});
   AssignmentModel.belongsTo(TeacherModel, {foreignKey: 'teacherId'});
   AssignmentModel.belongsToMany(StudentModel, {
-    through: 'StudentAssignments', // Sequelize will create this table automatically
+    through: StudentAssignmentsModel,
     foreignKey: 'assignmentId',
     otherKey: 'studentId',
+    onDelete: 'CASCADE',
+  });
+
+  StudentModel.belongsToMany(AssignmentModel, {
+    through: StudentAssignmentsModel,
+    foreignKey: 'studentId',
+    otherKey: 'assignmentId',
     onDelete: 'CASCADE',
   });
 

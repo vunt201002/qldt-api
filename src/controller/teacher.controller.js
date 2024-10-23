@@ -1,5 +1,4 @@
 import {createOrUpdate} from '../helpers/createOrUpdate.js';
-import ClassModel from '../model/class.model.js';
 import TeacherModel from '../model/teacher.model.js';
 
 export const createOrUpdateTeacher = async (req, res) => {
