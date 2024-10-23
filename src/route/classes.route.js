@@ -6,11 +6,12 @@ import {
   getClassSchedule,
   getOneClass,
 } from '../controller/classes.controller.js';
+import {verifyToken} from '../middleware/authorization.js';
 
 const router = express.Router();
 
-router.get('/', getAllClasses);
-router.get('/:id', getOneClass);
+router.get('/', verifyToken, getAllClasses);
+router.get('/:id', verifyToken, getOneClass);
 router.get('/schedules/:id', getClassSchedule);
 
 router.post('/', createOrUpdateClass);

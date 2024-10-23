@@ -1,14 +1,43 @@
 import getAll from '../helpers/getAll.js';
 import ClassModel from '../model/class.model.js';
-import getElementFields from '../helpers/getElementFields.js';
 import {getElementByField} from '../helpers/getElementByField.js';
 import {createOrUpdate} from '../helpers/createOrUpdate.js';
 import sequelize from '../database/connect.js';
 import {ValidationError} from 'sequelize';
+import roleEnum from '../enumurator/role.enum.js';
+import StudentModel from '../model/student.model.js';
 
 export const getAllClasses = async (req, res) => {
   try {
-    const classes = await getAll({model: ClassModel});
+    const {role, id} = req.user;
+    let classes = [];
+
+    switch (role) {
+      case roleEnum.ADMIN:
+        classes = await getAll({model: ClassModel});
+        break;
+      case roleEnum.TEACHER:
+        classes = await ClassModel.findAll({
+          where: {
+            teacherId: id,
+          },
+        });
+        break;
+      case roleEnum.STUDENT:
+        classes = await ClassModel.findAll({
+          include: [
+            {
+              model: StudentModel,
+              through: {
+                where: {
+                  studentId: id,
+                },
+              },
+            },
+          ],
+        });
+        break;
+    }
 
     return res.status(200).json({
       success: true,
@@ -26,18 +55,45 @@ export const getAllClasses = async (req, res) => {
 
 export const getOneClass = async (req, res) => {
   try {
-    const {id} = req.params;
+    const {role, id: userId} = req.user;
+    const {id: classId} = req.params;
+    let classElement;
 
-    const classElement = await getElementByField({
-      model: ClassModel,
-      field: 'id',
-      value: id,
-    });
+    switch (role) {
+      case roleEnum.ADMIN:
+        classElement = await getElementByField({
+          model: ClassModel,
+          field: 'id',
+          value: classId,
+        });
+        break;
+
+      case roleEnum.TEACHER:
+        classElement = await ClassModel.findOne({
+          where: {
+            id: classId,
+            teacherId: userId,
+          },
+        });
+        break;
+      case roleEnum.STUDENT: {
+        const studentInstance = await StudentModel.findOne({
+          where: {id: userId},
+          include: {
+            model: ClassModel,
+            where: {id: classId},
+            through: {attributes: []},
+          },
+        });
+        classElement = studentInstance ? studentInstance.Classes[0] : null;
+        break;
+      }
+    }
 
     if (!classElement)
       return res.status(404).json({
         success: false,
-        message: 'Class not found',
+        message: 'Class not found or you do not have access to this class.',
       });
 
     return res.status(200).json({
