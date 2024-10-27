@@ -2,13 +2,14 @@ import {getAccountByField} from '../repositories/account.repository.js';
 
 export const verifyAccountExists = async (req, res, next) => {
   try {
-    const {email} = req.body;
+    const {email, password} = req.body;
 
-    if (!email)
-      return res.status(404).json({
+    if (!email || !password) {
+      return res.status(400).json({
         success: false,
-        message: 'Email is required',
+        message: 'Email and password are required.',
       });
+    }
 
     const account = await getAccountByField({value: email});
 
