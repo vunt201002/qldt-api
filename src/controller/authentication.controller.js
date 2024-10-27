@@ -5,6 +5,7 @@ import statusAccountEnum from '../enumurator/statusAccount.enum.js';
 import {getVerifyCode, verifyCode} from '../service/verifyCodeService.js';
 import {generateToken} from '../utils/jwt.js';
 import {ACCESS_TOKEN, REFRESH_TOKEN} from '../constant/token.js';
+import {isEmail} from '../utils/email.js';
 
 export const verifyAccount = async (req, res) => {
   const {code} = req.body;
@@ -50,6 +51,20 @@ export const signUp = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Name, email, and password are required.',
+      });
+    }
+
+    if (!isEmail(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid email format.',
+      });
+    }
+
+    if (password.length < 6 || password.length > 10) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be between 6 to 10 characters.',
       });
     }
 
