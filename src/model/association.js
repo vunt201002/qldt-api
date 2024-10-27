@@ -14,10 +14,6 @@ import SystemSettings from './systemSettings.js';
 import NotificationModel from './notification.model.js';
 
 export const setupAssociations = () => {
-  // Account associations
-  AccountModel.hasOne(TeacherModel, {foreignKey: 'accountId', onDelete: 'CASCADE'});
-  AccountModel.hasOne(StudentModel, {foreignKey: 'accountId', onDelete: 'CASCADE'});
-
   // Teacher associations
   TeacherModel.belongsTo(AccountModel, {foreignKey: 'accountId'});
   TeacherModel.hasMany(ClassModel, {foreignKey: 'teacherId', onDelete: 'CASCADE'});
@@ -25,17 +21,18 @@ export const setupAssociations = () => {
   // Student associations
   StudentModel.belongsTo(AccountModel, {foreignKey: 'accountId'});
   StudentModel.belongsToMany(ClassModel, {
-    through: 'StudentClasses', // Sequelize will create this table automatically
+    through: 'StudentClasses',
     foreignKey: 'studentId',
     otherKey: 'classId',
     onDelete: 'CASCADE',
   });
   StudentModel.hasMany(AbsenceRequestModel, {foreignKey: 'studentId', onDelete: 'CASCADE'});
+  StudentModel.hasMany(AttendanceModel, {foreignKey: 'studentId', onDelete: 'CASCADE'});
 
   // Class associations
   ClassModel.belongsTo(TeacherModel, {foreignKey: 'teacherId'});
   ClassModel.belongsToMany(StudentModel, {
-    through: 'StudentClasses', // Same table name as above
+    through: 'StudentClasses',
     foreignKey: 'classId',
     otherKey: 'studentId',
     onDelete: 'CASCADE',
@@ -46,12 +43,7 @@ export const setupAssociations = () => {
 
   // Attendance associations
   AttendanceModel.belongsTo(ClassModel, {foreignKey: 'classId'});
-  AttendanceModel.belongsToMany(StudentModel, {
-    through: 'StudentAttendance', // Sequelize will create this table automatically
-    foreignKey: 'attendanceId',
-    otherKey: 'studentId',
-    onDelete: 'CASCADE',
-  });
+  AttendanceModel.belongsTo(StudentModel, {foreignKey: 'studentId'});
 
   // Material associations
   MaterialModel.belongsTo(ClassModel, {foreignKey: 'classId'});
@@ -62,18 +54,11 @@ export const setupAssociations = () => {
 
   // Survey associations
   SurveyModel.belongsTo(ClassModel, {foreignKey: 'classId'});
-  SurveyModel.belongsTo(AccountModel, {
-    as: 'creator',
-    foreignKey: 'createdBy',
-  });
   SurveyModel.hasMany(SurveyResponseModel, {foreignKey: 'surveyId', onDelete: 'CASCADE'});
 
   // SurveyResponse associations
   SurveyResponseModel.belongsTo(SurveyModel, {foreignKey: 'surveyId'});
-  SurveyResponseModel.belongsTo(AccountModel, {
-    as: 'respondent',
-    foreignKey: 'respondentId',
-  });
+  SurveyModel.belongsTo(StudentModel, {foreignKey: 'studentId'});
 
   // Notification associations
   NotificationModel.belongsTo(AccountModel, {
@@ -87,7 +72,7 @@ export const setupAssociations = () => {
 
   // Conversation associations
   ConversationModel.belongsToMany(AccountModel, {
-    through: 'ConversationParticipants', // Sequelize will create this table automatically
+    through: 'ConversationParticipants',
     foreignKey: 'conversationId',
     otherKey: 'accountId',
     onDelete: 'CASCADE',
