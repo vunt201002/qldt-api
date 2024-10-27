@@ -4,16 +4,13 @@ import TeacherModel from '../model/teacher.model.js';
 export const createOrUpdateTeacher = async (req, res) => {
   try {
     const {id} = req.params;
-    const {schedule, accountId} = req.body;
+    const data = req.body;
 
     const resp = await createOrUpdate({
       model: TeacherModel,
       field: 'id',
       value: id || '',
-      data: {
-        ...(accountId && {accountId}),
-        ...(schedule && {schedule: JSON.stringify(schedule)}),
-      },
+      data,
     });
 
     return res.status(200).json({

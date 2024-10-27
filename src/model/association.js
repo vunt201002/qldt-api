@@ -15,7 +15,7 @@ import NotificationModel from './notification.model.js';
 
 export const setupAssociations = () => {
   // Teacher associations
-  TeacherModel.belongsTo(AccountModel, {foreignKey: 'accountId'});
+  TeacherModel.belongsTo(AccountModel, {foreignKey: {name: 'accountId'}});
   TeacherModel.hasMany(ClassModel, {foreignKey: 'teacherId', onDelete: 'CASCADE'});
 
   // Student associations
