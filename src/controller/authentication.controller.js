@@ -116,6 +116,12 @@ export const login = async (req, res) => {
   try {
     const {user} = req;
 
+    if (!password)
+      return res.status(404).json({
+        success: false,
+        message: 'Password is required',
+      });
+
     if (!user.isVerified)
       return res.status(404).json({
         success: false,
@@ -150,18 +156,9 @@ export const login = async (req, res) => {
 };
 
 export const logout = async (req, res) => {
-  const {email} = req.body;
-
-  if (!email) {
-    return res.status(400).json({message: 'Email is required for logout.'});
-  }
-
   try {
+    const {email} = req.user;
     const account = await accountModel.findOne({where: {email}});
-
-    if (!account) {
-      return res.status(404).json({message: 'Account not found.'});
-    }
 
     account.token = null;
     account.session = null;

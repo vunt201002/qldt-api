@@ -16,7 +16,7 @@ router.post('/signup', signUp);
 router.post('/verify-code', verifyAccountExists, verifyAccount);
 router.get('/verify-code', verifyAccountExists, getAccountVerifyCode);
 router.post('/login', verifyAccountExists, login);
-router.post('/logout', logout);
+router.post('/logout', verifyAccountExists, logout);
 router.put('/account', verifyToken, changeAccountInfo);
 
 export default router;
