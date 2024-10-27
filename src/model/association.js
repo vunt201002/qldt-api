@@ -3,7 +3,6 @@ import TeacherModel from './teacher.model.js';
 import StudentModel from './student.model.js';
 import AccountModel from './account.model.js';
 import ClassModel from './class.model.js';
-import AssignmentModel from './assignment.model.js';
 import AbsenceRequestModel from './absenceRequest.model.js';
 import AttendanceModel from './attendance.model.js';
 import MaterialModel from './material.model.js';
@@ -13,7 +12,6 @@ import ConversationModel from './conversation.model.js';
 import MessageModel from './message.model.js';
 import SystemSettings from './systemSettings.js';
 import NotificationModel from './notification.model.js';
-import StudentAssignmentsModel from './studentAssignments.model.js';
 
 export const setupAssociations = () => {
   // Account associations
@@ -23,7 +21,6 @@ export const setupAssociations = () => {
   // Teacher associations
   TeacherModel.belongsTo(AccountModel, {foreignKey: 'accountId'});
   TeacherModel.hasMany(ClassModel, {foreignKey: 'teacherId', onDelete: 'CASCADE'});
-  TeacherModel.hasMany(AssignmentModel, {foreignKey: 'teacherId', onDelete: 'CASCADE'});
 
   // Student associations
   StudentModel.belongsTo(AccountModel, {foreignKey: 'accountId'});
@@ -43,27 +40,9 @@ export const setupAssociations = () => {
     otherKey: 'studentId',
     onDelete: 'CASCADE',
   });
-  ClassModel.hasMany(AssignmentModel, {foreignKey: 'classId', onDelete: 'CASCADE'});
   ClassModel.hasMany(AttendanceModel, {foreignKey: 'classId', onDelete: 'CASCADE'});
   ClassModel.hasMany(MaterialModel, {foreignKey: 'classId', onDelete: 'CASCADE'});
   ClassModel.hasMany(SurveyModel, {foreignKey: 'classId', onDelete: 'CASCADE'});
-
-  // Assignment associations
-  AssignmentModel.belongsTo(ClassModel, {foreignKey: 'classId'});
-  AssignmentModel.belongsTo(TeacherModel, {foreignKey: 'teacherId'});
-  AssignmentModel.belongsToMany(StudentModel, {
-    through: StudentAssignmentsModel,
-    foreignKey: 'assignmentId',
-    otherKey: 'studentId',
-    onDelete: 'CASCADE',
-  });
-
-  StudentModel.belongsToMany(AssignmentModel, {
-    through: StudentAssignmentsModel,
-    foreignKey: 'studentId',
-    otherKey: 'assignmentId',
-    onDelete: 'CASCADE',
-  });
 
   // Attendance associations
   AttendanceModel.belongsTo(ClassModel, {foreignKey: 'classId'});
