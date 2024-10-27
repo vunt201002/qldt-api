@@ -19,11 +19,6 @@ const Attendance = sequelize.define(
       defaultValue: statusAttendanceEnum.PRESENT,
       allowNull: false,
     },
-    timestamp: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
   },
   {
     timestamps: true,
