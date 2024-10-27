@@ -1,4 +1,5 @@
 import {getAccountByField} from '../repositories/account.repository.js';
+import {isEmail} from '../utils/email.js';
 
 export const verifyAccountExists = async (req, res, next) => {
   try {
@@ -10,6 +11,12 @@ export const verifyAccountExists = async (req, res, next) => {
         message: 'Email is required.',
       });
     }
+
+    if (!isEmail(email))
+      return res.status(400).json({
+        success: false,
+        message: 'Email is not correct.',
+      });
 
     const account = await getAccountByField({value: email});
 
