@@ -6,6 +6,7 @@ import sequelize from '../database/connect.js';
 import {ValidationError} from 'sequelize';
 import roleEnum from '../enumurator/role.enum.js';
 import StudentModel from '../model/student.model.js';
+import TeacherModel from '../model/teacher.model.js';
 
 export const getAllClasses = async (req, res) => {
   try {
@@ -18,9 +19,14 @@ export const getAllClasses = async (req, res) => {
         break;
       case roleEnum.TEACHER:
         classes = await ClassModel.findAll({
-          where: {
-            teacherId: id,
-          },
+          include: [
+            {
+              model: TeacherModel,
+              where: {
+                accountId: id,
+              },
+            },
+          ],
         });
         break;
       case roleEnum.STUDENT:

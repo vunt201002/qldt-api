@@ -1,20 +1,16 @@
 import {createOrUpdate} from '../helpers/createOrUpdate.js';
-import ClassModel from '../model/class.model.js';
 import StudentModel from '../model/student.model.js';
 
 export const createOrUpdateStudent = async (req, res) => {
   try {
     const {id} = req.params;
-    const {schedule, accountId} = req.body;
+    const data = req.body;
 
     const resp = await createOrUpdate({
       model: StudentModel,
       field: 'id',
       value: id || '',
-      data: {
-        ...(accountId && {accountId}),
-        ...(schedule && {schedule: JSON.stringify(schedule)}),
-      },
+      data,
     });
 
     return res.status(200).json({
