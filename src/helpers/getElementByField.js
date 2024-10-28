@@ -8,7 +8,7 @@ import {Model} from 'sequelize';
  * @param {any} value
  * @returns {Promise<Model|null>}
  */
-export async function getElementByField({model, field, value}) {
+export async function getElementByField({model, field = 'id', value}) {
   return model.findOne({
     where: {
       [field]: value,

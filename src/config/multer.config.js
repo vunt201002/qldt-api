@@ -1,8 +1,13 @@
 import multer from 'multer';
 import path from 'path';
+import {fileURLToPath} from 'url';
+import {dirname} from 'path';
+
 import {ensureUploadDirExists} from '../helpers/createUploadDir.js';
 
-const uploadDir = path.join(__dirname, 'uploads/materials');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+export const uploadDir = path.join(__dirname, 'uploads/materials');
 ensureUploadDirExists(uploadDir);
 
 const storage = multer.diskStorage({

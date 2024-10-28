@@ -24,7 +24,8 @@ const Material = sequelize.define(
     },
     type: {
       type: DataTypes.ENUM(...Object.values(typeMaterialEnum)),
-      allowNull: false,
+      defaultValues: typeMaterialEnum.READING,
+      allowNull: true,
     },
   },
   {
