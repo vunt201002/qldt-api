@@ -38,6 +38,13 @@ const Survey = sequelize.define(
   },
   {
     timestamps: true,
+    validate: {
+      startDateBeforeEndDate() {
+        if (this.startDate >= this.endDate) {
+          throw new Error('The start date must be before the end date.');
+        }
+      },
+    },
   },
 );
 

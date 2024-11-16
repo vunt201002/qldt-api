@@ -1,6 +1,5 @@
 import sequelize from '../database/connect.js';
 import {DataTypes} from 'sequelize';
-import AccountModel from './account.model.js';
 import SurveyModel from './survey.model.js';
 
 const SurveyResponse = sequelize.define(
@@ -23,6 +22,10 @@ const SurveyResponse = sequelize.define(
       type: DataTypes.JSON,
       allowNull: false,
       // Structure: [{ questionId: number, answer: string | string[] }]
+    },
+    grade: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
   },
   {
