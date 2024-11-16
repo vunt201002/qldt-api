@@ -7,6 +7,7 @@ import studentRoute from './student.route.js';
 import materialRoute from './material.route.js';
 import surveyRoute from './survey.route.js';
 import surveyResponseRoute from './surveyResponse.route.js';
+import attendanceRoute from './attendance.route.js';
 
 const router = express.Router();
 
@@ -18,5 +19,6 @@ router.use('/students', studentRoute);
 router.use('/materials', materialRoute);
 router.use('/surveys', surveyRoute);
 router.use('/surveyResponses', surveyResponseRoute);
+router.use('/attendance', attendanceRoute);
 
 export default router;
