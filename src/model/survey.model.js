@@ -21,7 +21,7 @@ const Survey = sequelize.define(
     questions: {
       type: DataTypes.JSON,
       allowNull: false,
-      // Structure: [{ question: string, type: 'multiple_choice' | 'text' | 'rating', options?: string[] }]
+      // Structure: [{ question: String, type: 'multiple_choice' | 'text' | 'rating', options?: String[] }]
     },
     startDate: {
       type: DataTypes.DATE,

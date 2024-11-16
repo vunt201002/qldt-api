@@ -19,14 +19,6 @@ const SurveyResponse = sequelize.define(
         key: 'id',
       },
     },
-    respondentId: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      references: {
-        model: AccountModel,
-        key: 'id',
-      },
-    },
     responses: {
       type: DataTypes.JSON,
       allowNull: false,

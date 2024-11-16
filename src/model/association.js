@@ -58,7 +58,7 @@ export const setupAssociations = () => {
 
   // SurveyResponse associations
   SurveyResponseModel.belongsTo(SurveyModel, {foreignKey: 'surveyId'});
-  SurveyModel.belongsTo(StudentModel, {foreignKey: 'studentId'});
+  SurveyResponseModel.belongsTo(StudentModel, {foreignKey: 'studentId'});
 
   // Notification associations
   NotificationModel.belongsTo(AccountModel, {
