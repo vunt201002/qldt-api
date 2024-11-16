@@ -1,11 +1,34 @@
 import {createOrUpdate} from '../helpers/createOrUpdate.js';
 import TeacherModel from '../model/teacher.model.js';
 import {ValidationError} from 'sequelize';
+import AccountModel from '../model/account.model.js';
+import roleEnum from '../enumurator/role.enum.js';
 
 export const createOrUpdateTeacher = async (req, res) => {
   try {
     const {id} = req.params;
     const data = req.body;
+    const {accountId} = data;
+
+    const account = await AccountModel.findOne({
+      where: {
+        id: accountId,
+      },
+    });
+
+    if (!account) {
+      return res.status(400).json({
+        success: false,
+        message: 'Account not exist',
+      });
+    }
+
+    if (account.role !== roleEnum.TEACHER) {
+      return res.status(400).json({
+        success: false,
+        message: 'Not a teacher account',
+      });
+    }
 
     const resp = await createOrUpdate({
       model: TeacherModel,
