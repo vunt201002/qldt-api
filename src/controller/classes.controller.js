@@ -177,7 +177,7 @@ export const createOrUpdateClass = async (req, res) => {
       invalidStudentIds = studentIds.filter((id) => !validStudentIds.includes(id));
 
       if (classInstance) {
-        await classInstance.addStudents(validStudentIds);
+        await classInstance.setStudents(validStudentIds);
       }
     }
 
