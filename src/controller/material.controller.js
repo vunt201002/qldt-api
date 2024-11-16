@@ -4,25 +4,50 @@ import {getElementByField} from '../helpers/getElementByField.js';
 import MaterialModel from '../model/material.model.js';
 import {getFileUlr} from '../utils/file.js';
 import {deleteOne} from '../helpers/deleteOne.js';
+import {createOrUpdate} from '../helpers/createOrUpdate.js';
 
 export const createOrUpdateMaterial = async (req, res) => {
   try {
-    const {classId} = req.params;
+    const {classId, id} = req.params;
     const {title, description, type} = req.body;
 
-    const classExists = await getElementByField({
-      model: ClassModel,
-      field: 'id',
-      value: classId,
-    });
+    if (classId) {
+      const classExists = await getElementByField({
+        model: ClassModel,
+        field: 'id',
+        value: classId,
+      });
 
-    if (!classExists) {
-      return res.status(404).json({
-        success: false,
-        message: 'Class not found.',
+      if (!classExists) {
+        return res.status(404).json({
+          success: false,
+          message: 'Class not found.',
+        });
+      }
+    }
+
+    if (id) {
+      const materialExists = await getElementByField({
+        model: MaterialModel,
+        value: id,
+      });
+
+      if (!materialExists) {
+        return res.status(404).json({
+          success: false,
+          message: 'Material not found.',
+        });
+      }
+
+      await createOrUpdate({model: MaterialModel, value: id, data: req.body});
+
+      return res.status(200).json({
+        success: true,
+        message: 'Material updated successfully.',
+        data: materialExists,
       });
     }
-    console.log(req.body, req.files);
+
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({
         success: false,

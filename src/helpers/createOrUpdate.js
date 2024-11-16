@@ -10,7 +10,7 @@ import {isEmpty} from '../utils/obj.js';
  * @param {Object} data
  * @returns {Promise<{data: Promise<Model> | Promise<Model | null>, success: boolean, message: string}|{data: (*|Promise<Model>|Promise<Model | null>), success: boolean, message: string} | void>}
  */
-export async function createOrUpdate({model, field, value, data}) {
+export async function createOrUpdate({model, field = 'id', value, data}) {
   let element = await model.findOne({
     where: {
       [field]: value,

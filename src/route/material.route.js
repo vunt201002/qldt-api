@@ -15,4 +15,6 @@ router.delete('/:id', deleteMaterial);
 
 router.post('/:classId', createOrUpdateMaterial);
 
+router.put('/:id', createOrUpdateMaterial);
+
 export default router;
