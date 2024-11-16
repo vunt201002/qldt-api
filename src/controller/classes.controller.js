@@ -7,6 +7,7 @@ import {ValidationError} from 'sequelize';
 import roleEnum from '../enumurator/role.enum.js';
 import StudentModel from '../model/student.model.js';
 import TeacherModel from '../model/teacher.model.js';
+import AccountModel from '../model/account.model.js';
 
 export const getAllClasses = async (req, res) => {
   try {
@@ -152,21 +153,38 @@ export const createOrUpdateClass = async (req, res) => {
       data: rest,
     });
 
+    let invalidStudentIds = [];
     if (studentIds && Array.isArray(studentIds)) {
       const classInstance = await getElementByField({
         model: ClassModel,
         field: 'id',
         value: resp.data.id,
       });
+
+      const validStudents = await StudentModel.findAll({
+        where: {
+          id: studentIds,
+        },
+        attributes: ['id'],
+        include: {
+          model: AccountModel,
+          attributes: ['id'],
+          where: {status: 'ACTIVE'},
+        },
+      });
+
+      const validStudentIds = validStudents.map((student) => student.id);
+      invalidStudentIds = studentIds.filter((id) => !validStudentIds.includes(id));
+
       if (classInstance) {
-        await classInstance.addStudents(studentIds);
+        await classInstance.addStudents(validStudentIds);
       }
     }
 
     return res.status(200).json({
       success: true,
       message: 'Create or update class successfully',
-      data: resp,
+      data: {...resp, invalidStudents: invalidStudentIds},
     });
   } catch (err) {
     console.error(`Error during create or update class`, err);
