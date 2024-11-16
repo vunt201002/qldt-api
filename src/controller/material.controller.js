@@ -7,29 +7,44 @@ import {getFileUlr} from '../utils/file.js';
 export const createOrUpdateMaterial = async (req, res) => {
   try {
     const {classId} = req.params;
-    const data = req.body;
+    const {title, description, type} = req.body;
 
     const classExists = await getElementByField({
       model: ClassModel,
-      value: classId || '',
+      field: 'id',
+      value: classId,
     });
+
     if (!classExists) {
       return res.status(404).json({
         success: false,
         message: 'Class not found.',
       });
     }
-    console.log({data}, 'adfasd');
-    const newMaterial = await MaterialModel.create({
-      ...data,
-      fileUrl: req.file ? getFileUlr(req.file.filename) : null,
-      classId,
-    });
+    console.log(req.body, req.files);
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one file is required.',
+      });
+    }
+
+    const materials = await Promise.all(
+      req.files.map((file) => {
+        return MaterialModel.create({
+          title,
+          description,
+          fileUrl: getFileUlr(file.filename),
+          type: type || null,
+          classId,
+        });
+      }),
+    );
 
     return res.status(201).json({
       success: true,
-      message: 'Material created successfully.',
-      data: newMaterial,
+      message: 'Materials created successfully.',
+      data: materials,
     });
   } catch (err) {
     console.error(`Error during create or update material`, err);
