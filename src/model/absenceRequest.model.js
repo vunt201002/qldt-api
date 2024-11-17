@@ -12,7 +12,7 @@ const AbsenceRequest = sequelize.define(
     },
     reason: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
     },
     status: {
       type: DataTypes.ENUM(...Object.values(statusRequestEnum)),
@@ -30,6 +30,13 @@ const AbsenceRequest = sequelize.define(
   },
   {
     timestamps: true,
+    validate: {
+      reqDateBeforeResDate() {
+        if (this.responseDate && this.responseDate < this.requestDate) {
+          throw new Error('The request date must be before the response date.');
+        }
+      },
+    },
   },
 );
 

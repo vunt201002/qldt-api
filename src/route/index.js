@@ -8,6 +8,7 @@ import materialRoute from './material.route.js';
 import surveyRoute from './survey.route.js';
 import surveyResponseRoute from './surveyResponse.route.js';
 import attendanceRoute from './attendance.route.js';
+import absenceRequestRoute from './absenceRequest.route.js';
 
 const router = express.Router();
 
@@ -20,5 +21,6 @@ router.use('/materials', materialRoute);
 router.use('/surveys', surveyRoute);
 router.use('/surveyResponses', surveyResponseRoute);
 router.use('/attendance', attendanceRoute);
+router.use('/absenceRequest', absenceRequestRoute);
 
 export default router;
