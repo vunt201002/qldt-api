@@ -1,5 +1,5 @@
 import NotificationModel from '../model/notification.model.js';
-import {ValidationError} from 'sequelize';
+import {ValidationError, Op} from 'sequelize';
 import {createOrUpdate} from '../helpers/createOrUpdate.js';
 import typeSenderNotification from '../enumurator/typeSenderNotification.js';
 import StudentModel from '../model/student.model.js';
@@ -72,6 +72,97 @@ export const createOrUpdateNotification = async (req, res) => {
         errors: errorMessages,
       });
     }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error.',
+    });
+  }
+};
+
+export const getStudentNotifications = async (req, res) => {
+  try {
+    const {studentId} = req.params;
+
+    const student = await getElementByField({
+      model: StudentModel,
+      value: studentId,
+    });
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found.',
+      });
+    }
+
+    const notifications = await student.getNotifications({
+      order: [['createdAt', 'DESC']],
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Notifications fetched successfully.',
+      data: notifications,
+    });
+  } catch (err) {
+    console.error(`Error fetching notifications for student:`, err);
+
+    if (err instanceof ValidationError) {
+      const errorMessages = err.errors.map((error) => error.message);
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        errors: errorMessages,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error.',
+    });
+  }
+};
+
+export const markNotificationsAsRead = async (req, res) => {
+  try {
+    const {studentId} = req.params;
+    const {notificationIds} = req.body;
+
+    const student = await getElementByField({
+      model: StudentModel,
+      value: studentId,
+    });
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found.',
+      });
+    }
+
+    const notifications = await NotificationModel.findAll({
+      where: {
+        id: notificationIds,
+      },
+    });
+
+    const validNotificationIds = notifications.map((notification) => notification.id);
+
+    await NotificationModel.update(
+      {isRead: true},
+      {
+        where: {
+          id: {[Op.in]: validNotificationIds},
+        },
+      },
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Notifications marked as read successfully.',
+      data: validNotificationIds,
+    });
+  } catch (err) {
+    console.error(`Error marking notifications as read:`, err);
 
     return res.status(500).json({
       success: false,
