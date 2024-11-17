@@ -1,7 +1,8 @@
 import sequelize from '../database/connect.js';
 import {DataTypes} from 'sequelize';
-import AccountModel from './account.model.js';
 import typeNotificationEnum from '../enumurator/typeNotification.enum.js';
+import notificationPriorityEnum from '../enumurator/notificationPriority.enum.js';
+import typeSenderNotificationEnum from '../enumurator/typeSenderNotification.js';
 
 const Notification = sequelize.define(
   'Notification',
@@ -14,43 +15,40 @@ const Notification = sequelize.define(
     title: {
       type: DataTypes.STRING,
       allowNull: false,
+      defaultValue: '',
     },
     content: {
       type: DataTypes.TEXT,
       allowNull: false,
+      defaultValue: '',
     },
     type: {
       type: DataTypes.ENUM(...Object.values(typeNotificationEnum)),
       allowNull: false,
+      defaultValue: typeNotificationEnum.SYSTEM,
     },
     senderId: {
       type: DataTypes.UUID,
-      allowNull: false,
-      references: {
-        model: AccountModel,
-        key: 'id',
-      },
+      allowNull: true,
     },
-    recipientId: {
-      type: DataTypes.UUID,
+    senderType: {
+      type: DataTypes.ENUM(...Object.values(typeSenderNotificationEnum)),
       allowNull: false,
-      references: {
-        model: AccountModel,
-        key: 'id',
-      },
+      defaultValue: typeSenderNotificationEnum.SYSTEM,
     },
     relatedItemId: {
       type: DataTypes.UUID,
       allowNull: true,
-      // Can reference various items based on type (class, assignment, etc.)
     },
     isRead: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+      defaultView: false,
     },
     priority: {
-      type: DataTypes.ENUM('LOW', 'MEDIUM', 'HIGH'),
-      defaultValue: 'MEDIUM',
+      type: DataTypes.ENUM(...Object.values(notificationPriorityEnum)),
+      allowNull: true,
+      defaultValue: notificationPriorityEnum.MEDIUM,
     },
   },
   {

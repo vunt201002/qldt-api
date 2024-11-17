@@ -9,6 +9,7 @@ import surveyRoute from './survey.route.js';
 import surveyResponseRoute from './surveyResponse.route.js';
 import attendanceRoute from './attendance.route.js';
 import absenceRequestRoute from './absenceRequest.route.js';
+import notificationRoute from './notification.route.js';
 
 const router = express.Router();
 
@@ -22,5 +23,6 @@ router.use('/surveys', surveyRoute);
 router.use('/surveyResponses', surveyResponseRoute);
 router.use('/attendance', attendanceRoute);
 router.use('/absenceRequest', absenceRequestRoute);
+router.use('/notifications', notificationRoute);
 
 export default router;

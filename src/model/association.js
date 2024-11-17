@@ -65,9 +65,19 @@ export const setupAssociations = () => {
     as: 'sender',
     foreignKey: 'senderId',
   });
-  NotificationModel.belongsTo(AccountModel, {
-    as: 'recipient',
-    foreignKey: 'recipientId',
+
+  NotificationModel.belongsToMany(StudentModel, {
+    through: 'NotificationStudents',
+    as: 'students',
+    foreignKey: 'notificationId',
+    otherKey: 'studentId',
+  });
+
+  StudentModel.belongsToMany(NotificationModel, {
+    through: 'NotificationStudents',
+    as: 'notifications',
+    foreignKey: 'studentId',
+    otherKey: 'notificationId',
   });
 
   // Conversation associations
