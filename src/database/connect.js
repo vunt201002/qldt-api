@@ -25,7 +25,7 @@ export function connect() {
 
 export function reSync() {
   sequelize
-    .sync({force: true, alter: true})
+    .sync({force: false, alter: false})
     .then(() => {
       console.log(`Re-sync done`);
     })
