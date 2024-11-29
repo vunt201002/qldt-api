@@ -7,40 +7,46 @@ import {generateToken} from '../utils/jwt.js';
 import {ACCESS_TOKEN, REFRESH_TOKEN} from '../constant/token.js';
 import {isEmail} from '../utils/email.js';
 import catchError from '../reponse/catchError.js';
+import {OkResponse} from '../reponse/Success.js';
+import {
+  ExistedResponse,
+  IncorrectDataResponse,
+  InvalidResponse,
+  NotEnoughParams,
+} from '../reponse/Error.js';
+import {getElementByField} from '../helpers/getElementByField.js';
+import AccountModel from '../model/account.model.js';
 
 export const verifyAccount = async (req, res) => {
-  const {code} = req.body;
-
-  if (!code) {
-    return res.status(400).json({
-      success: false,
-      message: 'Verification code is required.',
-    });
-  }
-
   try {
+    const {code} = req.body;
+
+    if (!code)
+      return NotEnoughParams({
+        res,
+        message: 'Verification code is required.',
+      });
+
     let {user} = req;
 
     const isValid = verifyCode(user.id, code);
 
-    if (!isValid) {
-      return res.status(400).json({
-        success: false,
+    if (!isValid)
+      return InvalidResponse({
+        res,
         message: 'Invalid or expired verification code.',
       });
-    }
 
     user.isVerified = true;
     user.status = statusAccountEnum.ACTIVE;
     await user.save();
 
-    return res.status(200).json({
-      success: true,
+    return OkResponse({
+      res,
       message: 'Account verified successfully.',
     });
   } catch (err) {
-    console.error(`Error during verification: ${err.message}`);
-    return res.status(500).json({message: 'Internal server error.'});
+    return catchError({res, err, message: 'Error during verification'});
   }
 };
 
@@ -48,26 +54,35 @@ export const signUp = async (req, res) => {
   try {
     const {name, email, password, role} = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({
-        success: false,
+    if (!name || !email || !password)
+      return NotEnoughParams({
+        res,
         message: 'Name, email, and password are required.',
       });
-    }
 
-    if (!isEmail(email)) {
-      return res.status(400).json({
-        success: false,
+    if (!isEmail(email))
+      return InvalidResponse({
+        res,
         message: 'Invalid email format.',
       });
-    }
 
-    if (password.length < 6 || password.length > 10) {
-      return res.status(400).json({
-        success: false,
+    if (password.length < 6 || password.length > 10)
+      return InvalidResponse({
+        res,
         message: 'Password must be between 6 to 10 characters.',
       });
-    }
+
+    const accountExisted = await getElementByField({
+      model: AccountModel,
+      field: 'email',
+      value: email,
+    });
+
+    if (accountExisted)
+      return ExistedResponse({
+        res,
+        message: 'Account existed',
+      });
 
     const hashPassword = await hash({password});
 
@@ -82,22 +97,15 @@ export const signUp = async (req, res) => {
 
     const code = await getVerifyCode(account);
 
-    return res.status(201).json({
-      success: true,
-      account: {
-        id: account.id,
-        name: account.name,
-        email: account.email,
-        role: account.role,
+    return OkResponse({
+      res,
+      data: {
+        ...account,
         verificationCode: code,
-        status: account.status,
-        passwordChangeRequired: true,
-        createdAt: account.createdAt,
-        updatedAt: account.updatedAt,
       },
     });
   } catch (err) {
-    catchError({res, err, message: 'Error during sign up'});
+    return catchError({res, err, message: 'Error during sign up'});
   }
 };
 
@@ -108,25 +116,24 @@ export const login = async (req, res) => {
     const {user} = req;
 
     if (!password)
-      return res.status(404).json({
-        success: false,
+      return NotEnoughParams({
+        res,
         message: 'Password is required',
       });
 
     if (!user.isVerified)
-      return res.status(404).json({
-        success: false,
+      return InvalidResponse({
+        res,
         message: 'Account is not verified',
       });
 
     const isPasswordCorrect = await compare(user.passwordHash, password);
 
-    if (!isPasswordCorrect) {
-      return res.status(401).json({
-        success: false,
+    if (!isPasswordCorrect)
+      return IncorrectDataResponse({
+        res,
         message: 'Incorrect password.',
       });
-    }
 
     const accessToken = generateToken({id: user.id, role: user.role}, ACCESS_TOKEN);
     const refreshToken = generateToken({id: user.id, role: user.role}, REFRESH_TOKEN);
@@ -134,15 +141,20 @@ export const login = async (req, res) => {
     user.token = refreshToken;
     await user.save();
 
-    return res.status(200).json({
-      success: true,
+    return OkResponse({
+      res,
       message: 'Login successful',
-      accessToken,
-      refreshToken,
+      data: {
+        accessToken,
+        refreshToken,
+      },
     });
   } catch (err) {
-    console.error(`Error during login: ${err.message}`);
-    return res.status(500).json({message: 'Internal server error.'});
+    return catchError({
+      res,
+      err,
+      message: 'Error during login',
+    });
   }
 };
 
@@ -156,10 +168,9 @@ export const logout = async (req, res) => {
 
     await account.save();
 
-    return res.status(200).json({message: 'Logged out successfully.'});
+    return OkResponse({res, message: 'Logged out successfully.'});
   } catch (err) {
-    console.error(`Error during logout: ${err.message}`);
-    return res.status(500).json({message: 'Internal server error.'});
+    return catchError({res, err, message: 'Logged out successfully.'});
   }
 };
 
@@ -184,16 +195,12 @@ export const changeAccountInfo = async (req, res) => {
     account.passwordChangeRequired = false;
     await account.save();
 
-    return res.status(200).json({
-      success: true,
+    return OkResponse({
+      res,
       message: 'Account information updated successfully.',
     });
   } catch (err) {
-    console.error('Error updating account info:', err.message);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error.',
-    });
+    return catchError({res, err, message: 'Error updating account info'});
   }
 };
 
@@ -204,13 +211,11 @@ export const getAccountVerifyCode = async (req, res) => {
 
     if (!code) return res.status(404).json({success: false, message: 'Account already verified'});
 
-    return res.status(200).json({
-      code,
-      success: true,
+    return OkResponse({
+      res,
       message: 'Get verify code successfully',
     });
   } catch (err) {
-    console.error(`Error during get verify code for account`, err);
-    return res.status(500).json({success: false, message: 'Internal server error'});
+    return catchError({res, err, message: 'Error during get verify code for account'});
   }
 };
