@@ -6,6 +6,7 @@ import {getVerifyCode, verifyCode} from '../service/verifyCodeService.js';
 import {generateToken} from '../utils/jwt.js';
 import {ACCESS_TOKEN, REFRESH_TOKEN} from '../constant/token.js';
 import {isEmail} from '../utils/email.js';
+import catchError from '../reponse/catchError.js';
 
 export const verifyAccount = async (req, res) => {
   const {code} = req.body;
@@ -96,17 +97,7 @@ export const signUp = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error(`Error during sign up: ${err.message}`);
-    if (err.name === 'SequelizeUniqueConstraintError')
-      return res.status(409).json({
-        success: false,
-        message: 'Email already exists.',
-      });
-
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error.',
-    });
+    catchError({res, err, message: 'Error during sign up'});
   }
 };
 
