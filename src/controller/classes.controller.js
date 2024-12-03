@@ -8,6 +8,9 @@ import roleEnum from '../enumurator/role.enum.js';
 import StudentModel from '../model/student.model.js';
 import TeacherModel from '../model/teacher.model.js';
 import AccountModel from '../model/account.model.js';
+import {OkResponse} from '../reponse/Success.js';
+import catchError from '../reponse/catchError.js';
+import {ForbiddenResponse, NotFoundResponse} from '../reponse/Error.js';
 
 export const getAllClasses = async (req, res) => {
   try {
@@ -46,17 +49,9 @@ export const getAllClasses = async (req, res) => {
         break;
     }
 
-    return res.status(200).json({
-      success: true,
-      message: 'Get all classes successfully',
-      data: classes,
-    });
+    return OkResponse({res, message: 'Get all classes successfully', data: classes});
   } catch (err) {
-    console.error(`Error when get all class`, err);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-    });
+    return catchError({res, err, message: 'Error getting all classes'});
   }
 };
 
@@ -65,6 +60,7 @@ export const getOneClass = async (req, res) => {
     const {role, id: userId} = req.user;
     const {id: classId} = req.params;
     let classElement;
+    let hasAccess = true;
 
     switch (role) {
       case roleEnum.ADMIN:
@@ -82,6 +78,7 @@ export const getOneClass = async (req, res) => {
             teacherId: userId,
           },
         });
+        hasAccess = !!classElement;
         break;
       case roleEnum.STUDENT: {
         const studentInstance = await StudentModel.findOne({
@@ -93,27 +90,20 @@ export const getOneClass = async (req, res) => {
           },
         });
         classElement = studentInstance ? studentInstance.Classes[0] : null;
+        hasAccess = !!classElement;
         break;
       }
+      default:
+        return ForbiddenResponse({res});
     }
 
-    if (!classElement)
-      return res.status(404).json({
-        success: false,
-        message: 'Class not found or you do not have access to this class.',
-      });
+    if (!classElement) return NotFoundResponse({res});
 
-    return res.status(200).json({
-      success: true,
-      message: 'Get class successfully.',
-      data: classElement,
-    });
+    if (!hasAccess) return ForbiddenResponse({res});
+
+    return OkResponse({res, message: 'Get class successfully.', data: classElement});
   } catch (err) {
-    console.error(`Error during get one class`, err);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-    });
+    return catchError({res, err, message: 'Error during get one class'});
   }
 };
 
