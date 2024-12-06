@@ -188,7 +188,7 @@ export const logout = async (req, res) => {
 
 export const changeAccountInfo = async (req, res) => {
   try {
-    const {name, password} = req.body;
+    const {name, password, avatar} = req.body;
     const {user} = req;
 
     const account = await accountModel.findOne({
@@ -196,15 +196,11 @@ export const changeAccountInfo = async (req, res) => {
         id: user.id,
       },
     });
-    if (name) {
-      account.name = name;
-    }
-
-    if (password) {
-      account.passwordHash = await hash({password});
-    }
-
+    if (name) account.name = name;
+    if (password) account.passwordHash = await hash({password});
+    if (avatar) account.avatar = avatar;
     account.passwordChangeRequired = false;
+
     await account.save();
 
     return OkResponse({

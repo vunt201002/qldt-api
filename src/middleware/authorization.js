@@ -18,6 +18,8 @@ export const verifyToken = (req, res, next) => {
   try {
     jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET, (err, user) => {
       if (err) {
+        console.log(accessToken);
+        console.log(err);
         return ForbiddenResponse({
           res,
           message: 'Token is not valid',
