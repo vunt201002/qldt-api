@@ -11,6 +11,11 @@ const account = sequelize.define(
       primaryKey: true,
       defaultValue: DataTypes.UUIDV4,
     },
+    avatar: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
     name: {
       type: DataTypes.STRING,
       allowNull: false,

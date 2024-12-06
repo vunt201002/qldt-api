@@ -1,13 +1,15 @@
 import jwt from 'jsonwebtoken';
 import roleEnum from '../enumurator/role.enum.js';
+import {ForbiddenResponse} from '../reponse/Error.js';
+import catchError from '../reponse/catchError.js';
 
 export const verifyToken = (req, res, next) => {
   const token = req.headers['authorization'];
 
   if (!token) {
-    return res.status(403).json({
-      success: false,
-      message: "You're not authenticated",
+    return ForbiddenResponse({
+      res,
+      message: "You're not authenticated.",
     });
   }
 
@@ -16,7 +18,8 @@ export const verifyToken = (req, res, next) => {
   try {
     jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET, (err, user) => {
       if (err) {
-        return res.status(403).json({
+        return ForbiddenResponse({
+          res,
           message: 'Token is not valid',
         });
       }
@@ -24,8 +27,7 @@ export const verifyToken = (req, res, next) => {
       next();
     });
   } catch (err) {
-    console.log(`Error when verify token`, err);
-    return res.status(401).json({message: 'Invalid or expired token.'});
+    return catchError({res, err, message: 'Error when verify token'});
   }
 };
 
@@ -33,9 +35,9 @@ export const verifyAdmin = (req, res, next) => {
   verifyToken(req, res, () => {
     if (req.user.role === roleEnum.ADMIN) return next();
 
-    return res.status(403).json({
-      success: false,
-      message: "You're not allowed to do that.",
+    return ForbiddenResponse({
+      res,
+      message: 'Not allowed',
     });
   });
 };
@@ -44,9 +46,9 @@ export const verifyAccessApi = (req, res, next) => {
   verifyToken(req, res, () => {
     if (req.user.role === roleEnum.ADMIN || req.user.id === req.params.id) return next();
 
-    return res.status(403).json({
-      success: false,
-      message: "You're not allowed to do that.",
+    return ForbiddenResponse({
+      res,
+      message: 'Not allowed',
     });
   });
 };
