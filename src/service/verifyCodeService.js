@@ -9,7 +9,6 @@ export const storeVerificationCode = (id, code) => {
   const newCodeEntry = {
     code,
     expires: Date.now() + expirationSeconds * 1000,
-    lastRequested: Date.now(),
   };
 
   if (!verificationCodes[id]) {
@@ -19,7 +18,6 @@ export const storeVerificationCode = (id, code) => {
   verificationCodes[id].codes.push(newCodeEntry);
   verificationCodes[id].lastRequested = Date.now();
 
-  // Optionally, clean up expired codes
   verificationCodes[id].codes = verificationCodes[id].codes.filter(
     (entry) => Date.now() < entry.expires,
   );
@@ -48,17 +46,17 @@ export const getVerifyCode = async (account) => {
 export const verifyCode = (id, inputCode) => {
   const records = verificationCodes[id];
 
-  if (!records || !records.length) {
-    console.log('Verify code not found', id);
+  if (!records || !records?.codes?.length) {
+    console.log('Verify code not found', id, inputCode);
     return false;
   }
 
-  const validRecord = records.find(
+  const validRecord = records.codes.find(
     (record) => record.code === inputCode && Date.now() <= record.expires,
   );
 
   if (!validRecord) {
-    console.log('Verify code is wrong or expired', id);
+    console.log('Verify code is wrong or expired', id, inputCode);
     return false;
   }
 

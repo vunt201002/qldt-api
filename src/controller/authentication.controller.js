@@ -21,6 +21,14 @@ import {getElementByField} from '../helpers/getElementByField.js';
 export const verifyAccount = async (req, res) => {
   try {
     const {code} = req.body;
+    let {user} = req;
+
+    if (user.isVerified)
+      return ActionHasBeenDone({
+        res,
+        errorCode: 9996,
+        message: 'User has been verified.',
+      });
 
     if (!code)
       return NotEnoughParams({
@@ -28,13 +36,12 @@ export const verifyAccount = async (req, res) => {
         message: 'Verification code is required.',
       });
 
-    let {user} = req;
-
     const isValid = verifyCode(user.id, code);
 
     if (!isValid)
       return InvalidResponse({
         res,
+        errorCode: 1004,
         message: 'Invalid or expired verification code.',
       });
 
@@ -45,6 +52,10 @@ export const verifyAccount = async (req, res) => {
     return OkResponse({
       res,
       message: 'Account verified successfully.',
+      data: {
+        id: user.id,
+        status: statusAccountEnum.ACTIVE,
+      },
     });
   } catch (err) {
     return catchError({res, err, message: 'Error during verification'});
