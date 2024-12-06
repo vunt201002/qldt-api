@@ -1,5 +1,6 @@
 import {compare, hash} from '../utils/bcrypt.js';
 import accountModel from '../model/account.model.js';
+import AccountModel from '../model/account.model.js';
 import RoleEnum from '../enumurator/role.enum.js';
 import statusAccountEnum from '../enumurator/statusAccount.enum.js';
 import {getVerifyCode, verifyCode} from '../service/verifyCodeService.js';
@@ -9,13 +10,13 @@ import {isEmail} from '../utils/email.js';
 import catchError from '../reponse/catchError.js';
 import {OkResponse} from '../reponse/Success.js';
 import {
+  ActionHasBeenDone,
   ExistedResponse,
   IncorrectDataResponse,
   InvalidResponse,
   NotEnoughParams,
 } from '../reponse/Error.js';
 import {getElementByField} from '../helpers/getElementByField.js';
-import AccountModel from '../model/account.model.js';
 
 export const verifyAccount = async (req, res) => {
   try {
@@ -81,12 +82,12 @@ export const signUp = async (req, res) => {
     if (accountExisted)
       return ExistedResponse({
         res,
-        message: 'Account existed',
+        message: 'User existed',
       });
 
     const hashPassword = await hash({password});
 
-    const account = await accountModel.create({
+    const {dataValues: account} = await accountModel.create({
       name,
       email,
       passwordHash: hashPassword,
@@ -209,11 +210,13 @@ export const getAccountVerifyCode = async (req, res) => {
     const {user} = req;
     const code = await getVerifyCode(user);
 
-    if (!code) return res.status(404).json({success: false, message: 'Account already verified'});
+    if (!code)
+      return ActionHasBeenDone({res, message: 'Account already verified or you reach your limit'});
 
     return OkResponse({
       res,
       message: 'Get verify code successfully',
+      data: {verifyCode: code},
     });
   } catch (err) {
     return catchError({res, err, message: 'Error during get verify code for account'});

@@ -5,15 +5,38 @@ import {sendVerificationCode} from './sendMailService.js';
 const verificationCodes = {};
 
 export const storeVerificationCode = (id, code) => {
-  const expirationMinutes = parseInt(process.env.VERIFICATION_CODE_EXPIRATION, 10) || 600;
-  verificationCodes[id] = {
+  const expirationSeconds = parseInt(process.env.VERIFICATION_CODE_EXPIRATION, 10) || 600;
+  const newCodeEntry = {
     code,
-    expires: Date.now() + expirationMinutes * 1000,
+    expires: Date.now() + expirationSeconds * 1000,
+    lastRequested: Date.now(),
   };
+
+  if (!verificationCodes[id]) {
+    verificationCodes[id] = {codes: [], lastRequested: 0};
+  }
+
+  verificationCodes[id].codes.push(newCodeEntry);
+  verificationCodes[id].lastRequested = Date.now();
+
+  // Optionally, clean up expired codes
+  verificationCodes[id].codes = verificationCodes[id].codes.filter(
+    (entry) => Date.now() < entry.expires,
+  );
 };
 
 export const getVerifyCode = async (account) => {
   if (account.status === statusAccountEnum.ACTIVE) return null;
+
+  const currentTime = Date.now();
+  const lastRequested = verificationCodes[account.id]
+    ? verificationCodes[account.id].lastRequested
+    : 0;
+  const requestInterval = process.env.LIMIT_GET_VERIFY_CODE_TIME * 1000;
+
+  if (currentTime - lastRequested < requestInterval) {
+    return null;
+  }
 
   const code = generateRandomCode();
   storeVerificationCode(account.id, code);
@@ -22,24 +45,22 @@ export const getVerifyCode = async (account) => {
   return code;
 };
 
-export const verifyCode = (email, inputCode) => {
-  const record = verificationCodes[email];
+export const verifyCode = (id, inputCode) => {
+  const records = verificationCodes[id];
 
-  if (!record) {
-    console.log(`Verify code not found`);
+  if (!records || !records.length) {
+    console.log('Verify code not found', id);
     return false;
   }
 
-  if (record.code !== inputCode) {
-    console.log(`Verify code is wrong`, record);
+  const validRecord = records.find(
+    (record) => record.code === inputCode && Date.now() <= record.expires,
+  );
+
+  if (!validRecord) {
+    console.log('Verify code is wrong or expired', id);
     return false;
   }
 
-  if (Date.now() > record.expires) {
-    console.log(`Verify code expired`);
-    return false;
-  }
-
-  delete verificationCodes[email];
   return true;
 };

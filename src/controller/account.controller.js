@@ -77,7 +77,7 @@ export const getAllUserClasses = async (req, res) => {
     if (!account)
       return res.status(404).json({
         success: false,
-        message: 'Account not found',
+        message: 'User not found',
       });
 
     if (account.role === roleEnum.TEACHER) {

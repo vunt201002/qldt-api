@@ -1,6 +1,6 @@
 import {getAccountByField} from '../repositories/account.repository.js';
 import {isEmail} from '../utils/email.js';
-import {IncorrectDataResponse, NotEnoughParams, NotFoundResponse} from '../reponse/Error.js';
+import {InvalidResponse, NotEnoughParams, NotFoundResponse} from '../reponse/Error.js';
 
 export const verifyAccountExists = async (req, res, next) => {
   try {
@@ -13,9 +13,10 @@ export const verifyAccountExists = async (req, res, next) => {
       });
 
     if (!isEmail(email))
-      return IncorrectDataResponse({
+      return InvalidResponse({
         res,
-        message: 'Email is not correct.',
+        errorCode: 1004,
+        message: 'Invalid email format.',
       });
 
     const account = await getAccountByField({value: email});
@@ -23,7 +24,7 @@ export const verifyAccountExists = async (req, res, next) => {
     if (!account)
       return NotFoundResponse({
         res,
-        message: 'Account not found',
+        message: 'User not found',
       });
 
     req.user = account;
