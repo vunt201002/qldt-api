@@ -16,7 +16,7 @@ export default [
         SharedArrayBuffer: 'readonly',
       },
       parserOptions: {
-        ecmaVersion: 2018,
+        ecmaVersion: 2020, // Updated to support ECMAScript 2020 features like optional chaining
         sourceType: 'module',
       },
     },

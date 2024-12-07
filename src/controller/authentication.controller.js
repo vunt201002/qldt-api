@@ -188,16 +188,26 @@ export const logout = async (req, res) => {
 
 export const changeAccountInfo = async (req, res) => {
   try {
-    const {name, password, avatar} = req.body;
+    const {name, password} = req.body;
     const {user} = req;
+    const avatar = req?.files?.length ? `/uploads/${req.files[0].filename}` : req.body.avatar;
 
     const account = await accountModel.findOne({
       where: {
         id: user.id,
       },
     });
+
     if (name) account.name = name;
-    if (password) account.passwordHash = await hash({password});
+    if (password) {
+      if (password.length < 6 || password.length > 10) {
+        return InvalidResponse({
+          res,
+          message: 'Password must be between 6 to 10 characters.',
+        });
+      }
+      account.passwordHash = await hash({password});
+    }
     if (avatar) account.avatar = avatar;
     account.passwordChangeRequired = false;
 
@@ -206,6 +216,12 @@ export const changeAccountInfo = async (req, res) => {
     return OkResponse({
       res,
       message: 'Account information updated successfully.',
+      data: {
+        id: user.id,
+        email: account.email,
+        avatar,
+        createdAt: account.createdAt,
+      },
     });
   } catch (err) {
     return catchError({res, err, message: 'Error updating account info'});
