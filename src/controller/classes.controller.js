@@ -3,14 +3,14 @@ import ClassModel from '../model/class.model.js';
 import {getElementByField} from '../helpers/getElementByField.js';
 import {createOrUpdate} from '../helpers/createOrUpdate.js';
 import sequelize from '../database/connect.js';
-import {ValidationError} from 'sequelize';
 import roleEnum from '../enumurator/role.enum.js';
 import StudentModel from '../model/student.model.js';
 import TeacherModel from '../model/teacher.model.js';
 import AccountModel from '../model/account.model.js';
 import {OkResponse} from '../reponse/Success.js';
 import catchError from '../reponse/catchError.js';
-import {ForbiddenResponse, NotFoundResponse} from '../reponse/Error.js';
+import {ForbiddenResponse, InvalidResponse, NotFoundResponse} from '../reponse/Error.js';
+import {getCurrentStudentCount, hasScheduleOverlap} from '../service/classService.js';
 
 export const getAllClasses = async (req, res) => {
   try {
@@ -146,44 +146,86 @@ export const getClassSchedule = async (req, res) => {
 export const createOrUpdateClass = async (req, res) => {
   try {
     const {id} = req.params;
-    const {studentIds, ...rest} = req.body;
-    const {data: resp} = await createOrUpdate({
+    const {studentIds, semester: reqSemester, schedule: reqSchedule, ...rest} = req.body;
+
+    let classInstance = null;
+    if (id) {
+      classInstance = await ClassModel.findByPk(id, {
+        include: [
+          {
+            model: StudentModel,
+            attributes: ['id'], // Only need IDs for comparison
+          },
+        ],
+      });
+      if (!classInstance) {
+        return NotFoundResponse({
+          res,
+          message: 'Class not found.',
+        });
+      }
+    }
+
+    const semesterToCheck = reqSemester || classInstance?.semester;
+    const scheduleToCheck = reqSchedule || classInstance?.schedule;
+
+    if (await hasScheduleOverlap(semesterToCheck, scheduleToCheck, id)) {
+      return InvalidResponse({
+        res,
+        message: 'Schedule conflict detected for the requested semester.',
+      });
+    }
+
+    const updateData = {
+      ...classInstance?.get({plain: true}),
+      ...rest,
+      semester: semesterToCheck,
+      schedule: scheduleToCheck,
+    };
+
+    const {data: updatedClass} = await createOrUpdate({
       model: ClassModel,
       field: 'id',
       value: id || '',
-      data: rest,
+      data: updateData,
     });
 
     if (studentIds && Array.isArray(studentIds)) {
-      const classInstance = await getElementByField({
-        model: ClassModel,
-        field: 'id',
-        value: resp.id,
-      });
+      const currentStudentIds = classInstance ? classInstance.Students.map((s) => s.id) : [];
+      const newStudentIds = studentIds.filter((id) => !currentStudentIds.includes(id));
 
-      const validStudents = await StudentModel.findAll({
-        where: {
-          id: studentIds,
-        },
-        attributes: ['id'],
-        include: {
-          model: AccountModel,
+      const newStudentCount = newStudentIds.length;
+      const currentStudentCount = currentStudentIds.length;
+      const maxStudentsAllowed = updatedClass.maxStudent;
+
+      if (currentStudentCount + newStudentCount > maxStudentsAllowed) {
+        return InvalidResponse({
+          res,
+          message: 'Adding these students would exceed the maximum class capacity.',
+        });
+      }
+
+      if (newStudentCount > 0) {
+        // Proceed with adding new students only if there are any
+        const validStudents = await StudentModel.findAll({
+          where: {id: newStudentIds},
           attributes: ['id'],
-          where: {status: 'ACTIVE'},
-        },
-      });
+          include: {
+            model: AccountModel,
+            attributes: ['id'],
+            where: {status: 'ACTIVE'},
+          },
+        });
 
-      const validStudentIds = validStudents.map((student) => student.id);
-
-      if (classInstance) {
-        await classInstance.setStudents(validStudentIds);
+        const validStudentIds = validStudents.map((student) => student.id);
+        await updatedClass.addStudents(validStudentIds); // Use addStudents to add to existing list
       }
     }
 
     return OkResponse({
       res,
       message: 'Create or update class successfully',
-      data: resp,
+      data: updatedClass,
     });
   } catch (err) {
     return catchError({
