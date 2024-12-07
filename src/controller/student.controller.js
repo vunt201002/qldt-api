@@ -3,6 +3,9 @@ import StudentModel from '../model/student.model.js';
 import {ValidationError} from 'sequelize';
 import AccountModel from '../model/account.model.js';
 import roleEnum from '../enumurator/role.enum.js';
+import {IncorrectDataResponse, NotFoundResponse} from '../reponse/Error.js';
+import {OkResponse} from '../reponse/Success.js';
+import catchError from '../reponse/catchError.js';
 
 export const createOrUpdateStudent = async (req, res) => {
   try {
@@ -16,47 +19,34 @@ export const createOrUpdateStudent = async (req, res) => {
       },
     });
 
-    if (!account) {
-      return res.status(400).json({
-        success: false,
+    if (!account)
+      return NotFoundResponse({
+        res,
         message: 'Account not exist',
       });
-    }
 
-    if (account.role !== roleEnum.STUDENT) {
-      return res.status(400).json({
-        success: false,
+    if (account.role !== roleEnum.STUDENT)
+      return IncorrectDataResponse({
+        res,
         message: 'Not a student account',
       });
-    }
 
-    const resp = await createOrUpdate({
+    const {data: resp} = await createOrUpdate({
       model: StudentModel,
       field: 'id',
       value: id || '',
       data,
     });
 
-    return res.status(200).json({
-      success: true,
-      message: 'Create or update student successfully',
+    return OkResponse({
+      res,
       data: resp,
     });
   } catch (err) {
-    console.error(`Error during create or update student`, err);
-
-    if (err instanceof ValidationError) {
-      const errorMessages = err.errors.map((error) => error.message);
-      return res.status(400).json({
-        success: false,
-        message: 'Validation error',
-        errors: errorMessages,
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error',
+    return catchError({
+      res,
+      err,
+      message: 'Error during create or update student',
     });
   }
 };

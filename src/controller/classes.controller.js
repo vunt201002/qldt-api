@@ -33,20 +33,31 @@ export const getAllClasses = async (req, res) => {
           ],
         });
         break;
-      case roleEnum.STUDENT:
+      case roleEnum.STUDENT: {
+        const student = await StudentModel.findOne({
+          where: {accountId: id},
+          attributes: ['id'],
+        });
+        if (!student) {
+          return NotFoundResponse({
+            res,
+            message: 'Student not found',
+          });
+        }
         classes = await ClassModel.findAll({
           include: [
             {
               model: StudentModel,
+              as: 'Students',
+              required: true,
               through: {
-                where: {
-                  studentId: id,
-                },
+                attributes: [],
+                where: {studentId: student.id},
               },
             },
           ],
         });
-        break;
+      }
     }
 
     return OkResponse({res, message: 'Get all classes successfully', data: classes});
@@ -136,19 +147,18 @@ export const createOrUpdateClass = async (req, res) => {
   try {
     const {id} = req.params;
     const {studentIds, ...rest} = req.body;
-    const resp = await createOrUpdate({
+    const {data: resp} = await createOrUpdate({
       model: ClassModel,
       field: 'id',
       value: id || '',
       data: rest,
     });
 
-    let invalidStudentIds = [];
     if (studentIds && Array.isArray(studentIds)) {
       const classInstance = await getElementByField({
         model: ClassModel,
         field: 'id',
-        value: resp.data.id,
+        value: resp.id,
       });
 
       const validStudents = await StudentModel.findAll({
@@ -164,33 +174,22 @@ export const createOrUpdateClass = async (req, res) => {
       });
 
       const validStudentIds = validStudents.map((student) => student.id);
-      invalidStudentIds = studentIds.filter((id) => !validStudentIds.includes(id));
 
       if (classInstance) {
         await classInstance.setStudents(validStudentIds);
       }
     }
 
-    return res.status(200).json({
-      success: true,
+    return OkResponse({
+      res,
       message: 'Create or update class successfully',
-      data: {...resp, invalidStudents: invalidStudentIds},
+      data: resp,
     });
   } catch (err) {
-    console.error(`Error during create or update class`, err);
-
-    if (err instanceof ValidationError) {
-      const errorMessages = err.errors.map((error) => error.message);
-      return res.status(400).json({
-        success: false,
-        message: 'Validation error',
-        errors: errorMessages,
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error',
+    return catchError({
+      res,
+      err,
+      message: 'Error during create or update class',
     });
   }
 };

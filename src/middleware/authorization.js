@@ -44,6 +44,37 @@ export const verifyAdmin = (req, res, next) => {
   });
 };
 
+export const verifyRoleAndCondition =
+  (allowedRoles, conditionCheck = null) =>
+  async (req, res, next) => {
+    verifyToken(req, res, async () => {
+      const {role, id} = req.user;
+
+      if (!allowedRoles.includes(role)) {
+        return ForbiddenResponse({
+          res,
+          message: 'Not authorized to access this endpoint',
+        });
+      }
+
+      if (conditionCheck && typeof conditionCheck === 'function') {
+        try {
+          const conditionResult = await conditionCheck(req, id);
+          if (!conditionResult) {
+            return ForbiddenResponse({
+              res,
+              message: 'Not authorized to perform this action',
+            });
+          }
+        } catch (error) {
+          return catchError({res, err: error, message: 'Error during authorization check'});
+        }
+      }
+
+      return next();
+    });
+  };
+
 export const verifyAccessApi = (req, res, next) => {
   verifyToken(req, res, () => {
     if (req.user.role === roleEnum.ADMIN || req.user.id === req.params.id) return next();
