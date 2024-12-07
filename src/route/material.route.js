@@ -5,16 +5,21 @@ import {
   getClassMaterials,
   getOneMaterial,
 } from '../controller/material.controller.js';
+import {
+  verifyAdmin,
+  verifyRoleAndClassMembership,
+  verifyToken,
+} from '../middleware/authorization.js';
 
 const router = express.Router();
 
-router.get('/all/:classId', getClassMaterials);
-router.get('/:id', getOneMaterial);
+router.get('/all/:classId', verifyRoleAndClassMembership, getClassMaterials);
+router.get('/:id', verifyRoleAndClassMembership, getOneMaterial);
 
-router.delete('/:id', deleteMaterial);
+router.delete('/:id', verifyRoleAndClassMembership, deleteMaterial);
 
-router.post('/:classId', createOrUpdateMaterial);
+router.post('/:classId', verifyRoleAndClassMembership, createOrUpdateMaterial);
 
-router.put('/:id', createOrUpdateMaterial);
+router.put('/:id', verifyRoleAndClassMembership, createOrUpdateMaterial);
 
 export default router;

@@ -1,7 +1,11 @@
 import jwt from 'jsonwebtoken';
 import roleEnum from '../enumurator/role.enum.js';
-import {ForbiddenResponse} from '../reponse/Error.js';
+import {ForbiddenResponse, NotFoundResponse} from '../reponse/Error.js';
 import catchError from '../reponse/catchError.js';
+import ClassModel from '../model/class.model.js';
+import TeacherModel from '../model/teacher.model.js';
+import StudentModel from '../model/student.model.js';
+import MaterialModel from '../model/material.model.js';
 
 export const verifyToken = (req, res, next) => {
   const token = req.headers['authorization'];
@@ -83,5 +87,89 @@ export const verifyAccessApi = (req, res, next) => {
       res,
       message: 'Not allowed',
     });
+  });
+};
+
+export const verifyRoleAndClassMembership = (req, res, next) => {
+  verifyToken(req, res, async () => {
+    const {user} = req;
+    let {classId, id: materialId} = req.params;
+    console.log({classId, materialId}, 'oiqurowie');
+    if (!classId && materialId) {
+      try {
+        const material = await MaterialModel.findByPk(materialId, {include: [{model: ClassModel}]});
+        if (!material) {
+          return NotFoundResponse({res, message: 'Material not found.'});
+        }
+        classId = material.classId; // Set classId for subsequent checks
+      } catch (err) {
+        return catchError({res, err, message: 'Error fetching material information'});
+      }
+    }
+
+    if (user.role === roleEnum.ADMIN) {
+      return next(); // Admins can access any class
+    } else if (user.role === roleEnum.TEACHER) {
+      // First retrieve the teacherId using the accountId from the user
+      TeacherModel.findOne({
+        where: {accountId: user.id},
+        attributes: ['id'], // Assuming the primary key is 'id' for the teacher
+      })
+        .then((teacher) => {
+          if (!teacher) {
+            return ForbiddenResponse({
+              res,
+              message: 'Teacher not found.',
+            });
+          }
+          // Check if the teacher is associated with the class
+          ClassModel.findOne({
+            where: {
+              id: classId,
+              teacherId: teacher.id, // Now using the actual teacherId
+            },
+          })
+            .then((classInstance) => {
+              if (classInstance) {
+                return next();
+              } else {
+                return ForbiddenResponse({
+                  res,
+                  message: 'Not authorized to access this endpoint',
+                });
+              }
+            })
+            .catch((err) => {
+              return catchError({res, err, message: 'Error during authorization check'});
+            });
+        })
+        .catch((err) => {
+          return catchError({res, err, message: 'Error finding teacher information'});
+        });
+    } else if (user.role === roleEnum.STUDENT) {
+      // Check if the student is linked through a many-to-many relationship
+      ClassModel.findByPk(classId, {
+        include: [
+          {
+            model: StudentModel,
+            where: {accountId: user.id}, // Assuming `accountId` links StudentModel to User
+            required: true,
+          },
+        ],
+      })
+        .then((classInstance) => {
+          if (classInstance) {
+            return next();
+          } else {
+            return ForbiddenResponse({
+              res,
+              message: 'Not authorized to access this endpoint',
+            });
+          }
+        })
+        .catch((err) => {
+          return catchError({res, err, message: 'Error during authorization check'});
+        });
+    }
   });
 };
