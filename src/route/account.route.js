@@ -1,5 +1,6 @@
 import express from 'express';
 import {
+  getAccountInfo,
   getAllAccounts,
   getAllUserClasses,
   setAccountInfo,
@@ -9,6 +10,7 @@ import {verifyAccessApi, verifyAdmin} from '../middleware/authorization.js';
 const router = express.Router();
 
 router.get('/', verifyAdmin, getAllAccounts);
+router.get('/:id', verifyAccessApi, getAccountInfo);
 router.get('/classes/:id', verifyAdmin, getAllUserClasses);
 
 router.put('/:id', verifyAccessApi, setAccountInfo);

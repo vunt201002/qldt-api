@@ -4,6 +4,8 @@ import {getElementByField} from '../helpers/getElementByField.js';
 import roleEnum from '../enumurator/role.enum.js';
 import ClassModel from '../model/class.model.js';
 import {getAllStudentClasses} from '../repositories/classes.repository.js';
+import catchError from '../reponse/catchError.js';
+import {OkResponse} from '../reponse/Success.js';
 
 export const getAllAccounts = async (req, res) => {
   try {
@@ -51,15 +53,16 @@ export const setAccountInfo = async (req, res) => {
 
     await account.update(updateData);
 
-    return res.status(200).json({
-      success: true,
-      message: 'Update account info successfully.',
+    return OkResponse({
+      res,
+      message: 'Update account info successfully',
+      data: updateData,
     });
   } catch (err) {
-    console.error(`Error when set account info`, err);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal Server Error',
+    return catchError({
+      res,
+      err,
+      message: 'Error when set account info',
     });
   }
 };
@@ -104,6 +107,26 @@ export const getAllUserClasses = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Internal Server Error',
+    });
+  }
+};
+
+export const getAccountInfo = async (req, res) => {
+  try {
+    const data = await getElementByField({
+      model: AccountModel,
+      value: req.user.id,
+    });
+
+    return OkResponse({
+      res,
+      data,
+    });
+  } catch (err) {
+    return catchError({
+      res,
+      err,
+      message: 'Error during get account info',
     });
   }
 };
