@@ -5,6 +5,9 @@ import typeSenderNotification from '../enumurator/typeSenderNotification.js';
 import StudentModel from '../model/student.model.js';
 import {getElementByField} from '../helpers/getElementByField.js';
 import TeacherModel from '../model/teacher.model.js';
+import {ForbiddenResponse, InvalidResponse, NotFoundResponse} from '../reponse/Error.js';
+import {OkResponse} from '../reponse/Success.js';
+import catchError from '../reponse/catchError.js';
 
 export const createOrUpdateNotification = async (req, res) => {
   try {
@@ -14,28 +17,22 @@ export const createOrUpdateNotification = async (req, res) => {
 
     if (senderType === typeSenderNotification.TEACHER) {
       if (!senderId)
-        return res.status(400).json({
-          success: false,
+        return InvalidResponse({
+          res,
           message: 'Teacher notifications must include a senderId.',
         });
 
       const teacher = await getElementByField({
         model: TeacherModel,
         value: senderId,
+        field: 'accountId',
       });
 
       if (!teacher)
-        return res.status(400).json({
-          success: false,
+        return NotFoundResponse({
+          res,
           message: 'Teacher not found.',
         });
-    }
-
-    if (senderType === 'SYSTEM' && senderId) {
-      return res.status(400).json({
-        success: false,
-        message: 'System notifications should not have a senderId.',
-      });
     }
 
     const resp = await createOrUpdate({
@@ -60,22 +57,15 @@ export const createOrUpdateNotification = async (req, res) => {
       }
     }
 
-    return res.status(201).json(resp);
+    return OkResponse({
+      res,
+      data: notification,
+    });
   } catch (err) {
-    console.error(`Error during create or update notification:`, err);
-
-    if (err instanceof ValidationError) {
-      const errorMessages = err.errors.map((error) => error.message);
-      return res.status(400).json({
-        success: false,
-        message: 'Validation error',
-        errors: errorMessages,
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error.',
+    return catchError({
+      res,
+      err,
+      message: 'Error during create or update notification',
     });
   }
 };
@@ -89,36 +79,31 @@ export const getStudentNotifications = async (req, res) => {
       value: studentId,
     });
     if (!student) {
-      return res.status(404).json({
-        success: false,
+      return NotFoundResponse({
+        res,
         message: 'Student not found.',
       });
     }
+
+    if (student.accountId !== req.user.id)
+      return ForbiddenResponse({
+        res,
+      });
 
     const notifications = await student.getNotifications({
       order: [['createdAt', 'DESC']],
     });
 
-    return res.status(200).json({
-      success: true,
+    return OkResponse({
+      res,
       message: 'Notifications fetched successfully.',
       data: notifications,
     });
   } catch (err) {
-    console.error(`Error fetching notifications for student:`, err);
-
-    if (err instanceof ValidationError) {
-      const errorMessages = err.errors.map((error) => error.message);
-      return res.status(400).json({
-        success: false,
-        message: 'Validation error',
-        errors: errorMessages,
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error.',
+    return catchError({
+      res,
+      err,
+      message: 'Error fetching notifications for student',
     });
   }
 };
@@ -133,11 +118,15 @@ export const markNotificationsAsRead = async (req, res) => {
       value: studentId,
     });
     if (!student) {
-      return res.status(404).json({
-        success: false,
+      return NotFoundResponse({
+        res,
         message: 'Student not found.',
       });
     }
+    if (student.accountId !== req.user.id)
+      return ForbiddenResponse({
+        res,
+      });
 
     const notifications = await NotificationModel.findAll({
       where: {
@@ -156,17 +145,16 @@ export const markNotificationsAsRead = async (req, res) => {
       },
     );
 
-    return res.status(200).json({
-      success: true,
-      message: 'Notifications marked as read successfully.',
+    return OkResponse({
+      res,
+      message: '',
       data: validNotificationIds,
     });
   } catch (err) {
-    console.error(`Error marking notifications as read:`, err);
-
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error.',
+    return catchError({
+      res,
+      err,
+      message: 'Error marking notifications as read',
     });
   }
 };

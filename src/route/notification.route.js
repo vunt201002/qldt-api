@@ -4,14 +4,28 @@ import {
   getStudentNotifications,
   markNotificationsAsRead,
 } from '../controller/notification.controller.js';
+import {verifyRoleAndCondition} from '../middleware/authorization.js';
+import roleEnum from '../enumurator/role.enum.js';
 
 const router = express.Router();
 
-router.get('/:studentId', getStudentNotifications);
+router.get(
+  '/:studentId',
+  verifyRoleAndCondition([roleEnum.ADMIN, roleEnum.STUDENT]),
+  getStudentNotifications,
+);
 
-router.post('/', createOrUpdateNotification);
-router.post('/:studentId', markNotificationsAsRead);
+router.post(
+  '/',
+  verifyRoleAndCondition([roleEnum.ADMIN, roleEnum.TEACHER]),
+  createOrUpdateNotification,
+);
+router.post(
+  '/:studentId',
+  verifyRoleAndCondition([roleEnum.ADMIN, roleEnum.STUDENT]),
+  markNotificationsAsRead,
+);
 
-router.put('/:id', createOrUpdateNotification);
+// router.put('/:id', createOrUpdateNotification);
 
 export default router;

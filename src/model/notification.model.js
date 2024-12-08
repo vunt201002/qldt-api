@@ -29,7 +29,7 @@ const Notification = sequelize.define(
     },
     senderId: {
       type: DataTypes.UUID,
-      allowNull: true,
+      allowNull: false,
     },
     senderType: {
       type: DataTypes.ENUM(...Object.values(typeSenderNotificationEnum)),
