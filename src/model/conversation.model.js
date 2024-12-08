@@ -13,6 +13,7 @@ const Conversation = sequelize.define(
     type: {
       type: DataTypes.ENUM(...Object.values(typeConversationEnum)),
       allowNull: false,
+      defaultValue: typeConversationEnum.PRIVATE,
     },
     title: {
       type: DataTypes.STRING,

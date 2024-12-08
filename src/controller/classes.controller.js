@@ -10,7 +10,7 @@ import AccountModel from '../model/account.model.js';
 import {OkResponse} from '../reponse/Success.js';
 import catchError from '../reponse/catchError.js';
 import {ForbiddenResponse, InvalidResponse, NotFoundResponse} from '../reponse/Error.js';
-import {getCurrentStudentCount, hasScheduleOverlap} from '../service/classService.js';
+import {hasScheduleOverlap} from '../service/classService.js';
 
 export const getAllClasses = async (req, res) => {
   try {

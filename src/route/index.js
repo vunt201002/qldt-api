@@ -10,6 +10,8 @@ import surveyResponseRoute from './surveyResponse.route.js';
 import attendanceRoute from './attendance.route.js';
 import absenceRequestRoute from './absenceRequest.route.js';
 import notificationRoute from './notification.route.js';
+import conversationRoute from './conversation.route.js';
+import messageRoute from './message.route.js';
 
 const router = express.Router();
 
@@ -24,5 +26,7 @@ router.use('/surveyResponses', surveyResponseRoute);
 router.use('/attendance', attendanceRoute);
 router.use('/absenceRequest', absenceRequestRoute);
 router.use('/notifications', notificationRoute);
+router.use('/conversations', conversationRoute);
+router.use('/messages', messageRoute);
 
 export default router;
