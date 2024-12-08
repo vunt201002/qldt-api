@@ -7,6 +7,7 @@ import TeacherModel from '../model/teacher.model.js';
 import StudentModel from '../model/student.model.js';
 import MaterialModel from '../model/material.model.js';
 import SurveyModel from '../model/survey.model.js';
+import SurveyResponseModel from '../model/surveyResponse.model.js';
 
 export const verifyToken = (req, res, next) => {
   const token = req.headers['authorization'];
@@ -64,7 +65,7 @@ export const verifyRoleAndCondition =
 
       if (conditionCheck && typeof conditionCheck === 'function') {
         try {
-          const conditionResult = await conditionCheck(req, id);
+          const conditionResult = await conditionCheck({req, res, id});
           if (!conditionResult) {
             return ForbiddenResponse({
               res,
@@ -220,6 +221,76 @@ export const verifyRoleAndClassMembershipForSurvey = async (req, res, next) => {
         res,
         message: 'Not authorized to access or modify this survey.',
       });
+    } catch (err) {
+      return catchError({res, err, message: 'Error during authorization check.'});
+    }
+  });
+};
+
+export const verifyRoleAndMembership = async (req, res, next) => {
+  verifyToken(req, res, async () => {
+    const {user} = req;
+    const {id} = req.params; // Could be survey response ID
+    const {surveyId} = req.body; // Could be provided for creating responses
+
+    if (user.role === roleEnum.ADMIN) {
+      return next(); // Admins have unrestricted access
+    }
+
+    try {
+      let classId = null;
+
+      if (surveyId) {
+        // Creating or updating survey responses where surveyId is in the body
+        const survey = await SurveyModel.findByPk(surveyId, {include: [ClassModel]});
+        if (!survey) {
+          return NotFoundResponse({res, message: 'Survey not found.'});
+        }
+        classId = survey.classId;
+      } else if (id) {
+        // Updating survey response, need to find survey ID from response
+        const surveyResponse = await SurveyResponseModel.findByPk(id, {
+          include: [
+            {
+              model: SurveyModel,
+              include: [
+                {
+                  model: ClassModel,
+                  attributes: ['id'], // Assuming you only need the class ID
+                },
+              ],
+            },
+          ],
+        });
+        if (!surveyResponse) {
+          return NotFoundResponse({res, message: 'Survey response not found.'});
+        }
+        classId = surveyResponse.Survey.Class.id;
+      }
+
+      if (!classId) {
+        return ForbiddenResponse({res, message: 'Unable to determine class association.'});
+      }
+
+      // Validate teacher or student role and class membership
+      const classInstance = await ClassModel.findByPk(classId, {
+        include: [
+          {
+            model: user.role === roleEnum.TEACHER ? TeacherModel : StudentModel,
+            where: {accountId: user.id},
+            required: true,
+          },
+        ],
+      });
+
+      if (classInstance) {
+        return next();
+      } else {
+        return ForbiddenResponse({
+          res,
+          message: 'Not authorized based on class membership or role.',
+        });
+      }
     } catch (err) {
       return catchError({res, err, message: 'Error during authorization check.'});
     }
