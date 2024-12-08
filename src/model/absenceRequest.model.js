@@ -12,7 +12,7 @@ const AbsenceRequest = sequelize.define(
     },
     reason: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     status: {
       type: DataTypes.ENUM(...Object.values(statusRequestEnum)),
