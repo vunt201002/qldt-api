@@ -30,3 +30,35 @@ export const createConversation = async (req, res) => {
     });
   }
 };
+
+export const getAccountConversation = async (req, res) => {
+  try {
+    const accountId = req.user.id;
+
+    // Fetch all conversations that include the current user as a participant
+    const conversations = await ConversationModel.findAll({
+      include: [
+        {
+          model: AccountModel,
+          as: 'Accounts', // Ensure this matches the alias used in the association
+          where: {id: accountId},
+          attributes: [], // We don't need to return any attributes of the participants
+          through: {
+            attributes: [], // No attributes from the join table either
+          },
+        },
+      ],
+    });
+
+    return OkResponse({
+      res,
+      data: conversations,
+    });
+  } catch (err) {
+    return catchError({
+      res,
+      err,
+      message: 'Error during get account conversation',
+    });
+  }
+};
