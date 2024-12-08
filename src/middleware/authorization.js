@@ -6,6 +6,7 @@ import ClassModel from '../model/class.model.js';
 import TeacherModel from '../model/teacher.model.js';
 import StudentModel from '../model/student.model.js';
 import MaterialModel from '../model/material.model.js';
+import SurveyModel from '../model/survey.model.js';
 
 export const verifyToken = (req, res, next) => {
   const token = req.headers['authorization'];
@@ -170,6 +171,57 @@ export const verifyRoleAndClassMembership = (req, res, next) => {
         .catch((err) => {
           return catchError({res, err, message: 'Error during authorization check'});
         });
+    }
+  });
+};
+
+export const verifyRoleAndClassMembershipForSurvey = async (req, res, next) => {
+  verifyToken(req, res, async () => {
+    try {
+      const {user} = req; // Assumes `req.user` is set from a previous authentication middleware
+      const {id} = req.params; // Survey ID from URL, might not exist for create operation
+      const {classId} = req.body; // Expected in body for create operation
+
+      if (user.role === roleEnum.ADMIN) {
+        return next(); // Admins can operate on any survey regardless of the operation
+      }
+
+      // For creating a new survey, ensure classId is provided
+      if (!id && !classId) {
+        return ForbiddenResponse({
+          res,
+          message: 'Class ID is required for creating a survey.',
+        });
+      }
+
+      const actualClassId = id
+        ? (await SurveyModel.findByPk(id, {include: [{model: ClassModel}]})).classId
+        : classId;
+
+      // Retrieve the teacher record using the accountId from req.user
+      const teacher = await TeacherModel.findOne({
+        where: {accountId: user.id},
+      });
+
+      if (!teacher) {
+        return ForbiddenResponse({
+          res,
+          message: 'Teacher not found with provided account ID.',
+        });
+      }
+
+      // Verify if the teacher is associated with the class of the survey
+      const classInstance = await ClassModel.findByPk(actualClassId);
+      if (classInstance && classInstance.teacherId === teacher.id) {
+        return next();
+      }
+
+      return ForbiddenResponse({
+        res,
+        message: 'Not authorized to access or modify this survey.',
+      });
+    } catch (err) {
+      return catchError({res, err, message: 'Error during authorization check.'});
     }
   });
 };

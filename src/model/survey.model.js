@@ -23,6 +23,10 @@ const Survey = sequelize.define(
       allowNull: false,
       // Structure: [{ question: String, type: 'multiple_choice' | 'text' | 'rating', options?: String[] }]
     },
+    fileUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     startDate: {
       type: DataTypes.DATE,
       allowNull: false,
